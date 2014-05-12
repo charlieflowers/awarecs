@@ -61,7 +61,7 @@ fn get_number(string_contents : &str, mut index : uint) -> ~str{
         let ch = string_contents[index] as char;
         if ch.is_whitespace() { return "Number: ".to_owned() + value; }
         if ! ch.is_digit() { fail!("Found a {} right in the middle of an expected number. Can't do that.", ch)}
-        value = value + ch;
+        value = value + std::str::from_char(ch);
         index = index + 1;
         if index >= string_contents.len() { fail!("Inside get_number, we ran past end of parser input and were planning to keep going.");}
     }
