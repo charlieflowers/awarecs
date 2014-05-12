@@ -18,10 +18,6 @@ fn main() {
     let second_char = string_contents[1];
     println!("the second char is {}", second_char);
 
-    // let contents = str::from_utf8(File::open (&Path::new("charlie-to-parse.txt")).read_to_end ().unwrap ().as_slice ());
-
-    // let codeToParse = str::from_utf8(contents.unwrap().as_slice());
-
     println!("Hello! I'm going to parse {}", string_contents);
 
     match first_char as char {
@@ -44,7 +40,7 @@ fn main() {
 
         let token = match next_char {
             num if num.is_digit() => get_number(string_contents, index),
-            op if op == '+' || op == '-' => get_operator(string_contents, index),
+            '+' | '-' => get_operator(string_contents, index),
             _ => {fail!("unable to match char {} at index {}", next_char, *index)}
         };
 
