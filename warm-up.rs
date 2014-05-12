@@ -47,8 +47,6 @@ fn main() {
         println!("Got token: {}", token);
         println!("After getting token, index is {}", *index);
     }
-
-    println!("Congrats on using loop successfully.");
 }
 
 fn eat_whitespace(string_contents : &str, index : &mut uint) {
