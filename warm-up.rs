@@ -11,7 +11,12 @@ fn main() {
 
     let string_contents = str::from_utf8(contents).unwrap();
 
+    let first_char = string_contents[0];
 
+    println!("The first char is {}", first_char);
+
+    let second_char = string_contents[1];
+    println!("the second char is {}", second_char);
 
     // let contents = str::from_utf8(File::open (&Path::new("charlie-to-parse.txt")).read_to_end ().unwrap ().as_slice ());
 
@@ -19,6 +24,10 @@ fn main() {
 
     println!("Hello! I'm going to parse {}", string_contents);
 
+    match first_char as char {
+        '4' => println!("Yes, the first char matches '4'"),
+        _   => fail!("No, first char does not match '4'")
+    }
 
 
 }
