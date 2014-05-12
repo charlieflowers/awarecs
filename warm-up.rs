@@ -34,32 +34,33 @@ fn main() {
         println!("Next char is {}", next_char);
     }
 
-    let mut index = 0;
+    let index : &mut uint = &mut 0;
 
     loop {
         eat_whitespace(string_contents, index);
-        if index >= string_contents.len()  { break; }
-        let next_char = string_contents[index] as char;
-        println!("char {} is {}.", next_char, index);
+        if *index >= string_contents.len()  { break; }
+        let next_char = string_contents[*index] as char;
+        println!("char {} is {}.", next_char, *index);
 
         let token = match next_char {
             num if num.is_digit() => get_number(string_contents, index),
             op if op == '+' || op == '-' => get_operator(string_contents, index, op),
-            _ => {fail!("unable to match char {} at index {}", next_char, index)}
+            _ => {fail!("unable to match char {} at index {}", next_char, *index)}
         };
 
         println!("Got token: {}", token);
+        println!("After getting token, index is {}", *index);
     }
 
     println!("Congrats on using loop successfully.");
 }
 
-fn eat_whitespace(string_contents : &str, mut index : uint) {
+fn eat_whitespace(string_contents : &str, index : &mut uint) {
     let mut count = 0;
     loop {
-        if (string_contents [index] as char).is_whitespace() {
+        if (string_contents [*index] as char).is_whitespace() {
             count = count+1;
-            index = index+1;
+            *index = *index+1;
         } else {
             println!("Ate {} chars of whitespace.", count);
             return;
@@ -67,18 +68,18 @@ fn eat_whitespace(string_contents : &str, mut index : uint) {
     }
 }
 
-fn get_number(string_contents : &str, mut index : uint) -> ~str{
+fn get_number(string_contents : &str, index : &mut uint) -> ~str{
     let mut value = "".to_owned();
     loop {
-        let ch = string_contents[index] as char;
+        let ch = string_contents[*index] as char;
         if ch.is_whitespace() { return "Number: ".to_owned() + value; }
         if ! ch.is_digit() { fail!("Found a {} right in the middle of an expected number. Can't do that.", ch)}
         value = value + std::str::from_char(ch);
-        index = index + 1;
-        if index >= string_contents.len() { fail!("Inside get_number, we ran past end of parser input and were planning to keep going.");}
+        *index = *index + 1;
+        if *index >= string_contents.len() { fail!("Inside get_number, we ran past end of parser input and were planning to keep going.");}
     }
 }
 
-fn get_operator(string_contents : &str, mut index : uint, operator_char : char) -> ~str {
-    fail!("get_operator not impleemnted yet, but index is {} and char is {}", index, operator_char);
+fn get_operator(string_contents : &str, index : &mut uint, operator_char : char) -> ~str {
+    fail!("get_operator not impleemnted yet, but index is {} and char is {}", *index, operator_char);
 }
