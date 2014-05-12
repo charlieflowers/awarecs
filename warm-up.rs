@@ -44,7 +44,7 @@ fn main() {
 
         let token = match next_char {
             num if num.is_digit() => get_number(string_contents, index),
-            op if op == '+' || op == '-' => get_operator(string_contents, index, op),
+            op if op == '+' || op == '-' => get_operator(string_contents, index),
             _ => {fail!("unable to match char {} at index {}", next_char, *index)}
         };
 
@@ -80,7 +80,7 @@ fn get_number(string_contents : &str, index : &mut uint) -> ~str{
     }
 }
 
-fn get_operator(string_contents : &str, index : &mut uint, operator_char : char) -> ~str {
+fn get_operator(string_contents : &str, index : &mut uint) -> ~str {
     let mut operator = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
