@@ -29,5 +29,10 @@ fn main() {
         _   => fail!("No, first char does not match '4'")
     }
 
+    for index in range(0u, string_contents.len()) {
+        let next_char = string_contents[index] as char;
+        println!("Next char is {}", next_char);
+    }
+
 
 }
