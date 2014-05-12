@@ -33,8 +33,8 @@ fn main() {
     let index : &mut uint = &mut 0;
 
     loop {
-        eat_whitespace(string_contents, index);
         if *index >= string_contents.len()  { break; }
+        eat_whitespace(string_contents, index);
         let next_char = string_contents[*index] as char;
         println!("char {} is {}.", next_char, *index);
 
@@ -52,14 +52,16 @@ fn main() {
 fn eat_whitespace(string_contents : &str, index : &mut uint) {
     let mut count = 0;
     loop {
-        if (string_contents [*index] as char).is_whitespace() {
-            count = count+1;
-            *index = *index+1;
+        if *index >= string_contents.len() {break};
+        if ! (string_contents [*index] as char).is_whitespace() {
+            break;
         } else {
-            println!("Ate {} chars of whitespace.", count);
-            return;
+            count = count+1;
+            *index = *index+1
         }
     }
+
+    println!("Ate {} chars of whitespace.", count);
 }
 
 fn get_number(string_contents : &str, index : &mut uint) -> ~str{
