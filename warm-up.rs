@@ -81,5 +81,13 @@ fn get_number(string_contents : &str, index : &mut uint) -> ~str{
 }
 
 fn get_operator(string_contents : &str, index : &mut uint, operator_char : char) -> ~str {
-    fail!("get_operator not impleemnted yet, but index is {} and char is {}", *index, operator_char);
+    let mut operator = "".to_owned();
+    loop {
+        let ch = string_contents[*index] as char;
+        if ch.is_whitespace() { return "Operator: ".to_owned() + operator; }
+        if ch != '+' && ch != '-' { fail!("I thought I was parsing an operator, but I found this in it: {}", ch)}
+        operator = operator + std::str::from_char(ch);
+        *index = *index + 1;
+        if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}
+    }
 }
