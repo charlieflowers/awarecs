@@ -34,11 +34,11 @@ fn main() {
 
     loop {
         if *index >= string_contents.len()  { break; }
-        eat_whitespace(string_contents, index);
         let next_char = string_contents[*index] as char;
         println!("char {} is {}.", next_char, *index);
 
         let token = match next_char {
+            ws if ws.is_whitespace() => eat_whitespace(string_contents, index),
             num if num.is_digit() => get_number(string_contents, index),
             '+' | '-' => get_operator(string_contents, index),
             _ => {fail!("unable to match char {} at index {}", next_char, *index)}
@@ -49,7 +49,7 @@ fn main() {
     }
 }
 
-fn eat_whitespace(string_contents : &str, index : &mut uint) {
+fn eat_whitespace(string_contents : &str, index : &mut uint) -> ~str {
     let mut count = 0;
     loop {
         if *index >= string_contents.len() {break};
@@ -62,6 +62,7 @@ fn eat_whitespace(string_contents : &str, index : &mut uint) {
     }
 
     println!("Ate {} chars of whitespace.", count);
+    "Whitespace: ".to_owned() + count.to_str()
 }
 
 fn get_number(string_contents : &str, index : &mut uint) -> ~str{
