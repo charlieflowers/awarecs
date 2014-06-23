@@ -11,24 +11,24 @@ fn main() {
 
     let string_contents = str::from_utf8(contents).unwrap();
 
-    let first_char = string_contents[0];
+    // let first_char = string_contents[0];
 
-    println!("The first char is {}", first_char);
+    // println!("The first char is {}", first_char);
 
-    let second_char = string_contents[1];
-    println!("the second char is {}", second_char);
+    // let second_char = string_contents[1];
+    // println!("the second char is {}", second_char);
 
-    println!("Hello! I'm going to parse {}", string_contents);
+    // println!("Hello! I'm going to parse {}", string_contents);
 
-    match first_char as char {
-        '4' => println!("Yes, the first char matches '4'"),
-        _   => fail!("No, first char does not match '4'")
-    }
+    // match first_char as char {
+    //     '4' => println!("Yes, the first char matches '4'"),
+    //     _   => fail!("No, first char does not match '4'")
+    // }
 
-    for index in range(0u, string_contents.len()) {
-        let next_char = string_contents[index] as char;
-        println!("Next char is {}", next_char);
-    }
+    // for index in range(0u, string_contents.len()) {
+    //     let next_char = string_contents[index] as char;
+    //     println!("Next char is {}", next_char);
+    // }
 
     let index : &mut uint = &mut 0;
 
@@ -38,7 +38,7 @@ fn main() {
         println!("char {} is {}.", next_char, *index);
 
         let token = match next_char {
-            ws if ws.is_whitespace() => eat_whitespace(string_contents, index),
+            ws if ws.is_whitespace() => get_whitespace(string_contents, index),
             num if num.is_digit() => get_number(string_contents, index),
             '+' | '-' => get_operator(string_contents, index),
             _ => {fail!("unable to match char {} at index {}", next_char, *index)}
@@ -49,20 +49,22 @@ fn main() {
     }
 }
 
-fn eat_whitespace(string_contents : &str, index : &mut uint) -> ~str {
-    let mut count = 0;
+fn get_whitespace(string_contents : &str, index : &mut uint) -> ~str {
+    let mut value = "".to_owned();
     loop {
         if *index >= string_contents.len() {break};
-        if ! (string_contents [*index] as char).is_whitespace() {
+        let ch = string_contents[*index] as char;
+        if ! ch.is_whitespace() {
             break;
         } else {
-            count = count+1;
+            value = value + std::str::from_char(ch);
             *index = *index+1
         }
     }
 
-    println!("Ate {} chars of whitespace.", count);
-    "Whitespace: ".to_owned() + count.to_str()
+    if value.len() == 0  { fail!("You are not supposed to call get_whitespace unless you know you got some. But I found zero characters of whitespace.")}
+
+    return "Whitespace: ".to_owned() + value;
 }
 
 fn get_number(string_contents : &str, index : &mut uint) -> ~str{
