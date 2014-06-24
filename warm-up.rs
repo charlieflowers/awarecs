@@ -41,6 +41,7 @@ fn main() {
             ws if ws.is_whitespace() => get_whitespace(string_contents, index),
             num if num.is_digit() => get_number(string_contents, index),
             '+' | '-' => get_operator(string_contents, index),
+            '#' => get_comment(string_contents, index),
             _ => {fail!("unable to match char {} at index {}", next_char, *index)}
         };
 
@@ -80,13 +81,59 @@ fn get_number(string_contents : &str, index : &mut uint) -> ~str{
 }
 
 fn get_operator(string_contents : &str, index : &mut uint) -> ~str {
-    let mut operator = "".to_owned();
+    let mut result = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
-        if ch.is_whitespace() { return "Operator: ".to_owned() + operator; }
-        if ch != '+' && ch != '-' { fail!("I thought I was parsing an operator, but I found this in it: {}", ch)}
-        operator = operator + std::str::from_char(ch);
+        if ch.is_whitespace() { return "Result: ".to_owned() + result; }
+        if ch != '+' && ch != '-' { fail!("I thought I was parsing an result, but I found this in it: {}", ch)}
+        result = result + std::str::from_char(ch);
         *index = *index + 1;
         if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}
+    }
+}
+
+fn get_comment(string_contents : &str, index : &mut uint) -> ~str {
+    let first_ch = string_contents[*index] as char;
+    if first_ch != '#' { fail!("I thought I was parsing a comment, but it starts with this: {}", first_ch)}
+    let next_ch = string_contents[*index + 1] as char;
+    if next_ch == '#' { return get_herecomment(string_contents, index); }
+    let mut result = "".to_owned();
+    loop {
+        let ch = string_contents[*index] as char;
+        result = result + std::str::from_char(ch);
+        *index = *index + 1;
+        if ch == '\n' { return "Comment: ".to_owned() + result; }
+        if *index >= string_contents.len() { fail!("Inside get_comment, we ran past end of parser input and were planning to keep going.");}
+    }
+}
+
+fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> ~str {
+    let mut result = "".to_owned();
+    for n in range(0, expectation.len() - 1) {
+        let actual = string_contents[*index + n] as char;
+        let expected = expectation[n] as char;
+        if actual != expected {
+            fail!("At index {}, expected {} but got \r\n {}.", *index, expectation, string_contents.slice_from(*index));
+        }
+        result = result + std::str::from_char(actual);
+        *index = *index + 1;
+    }
+    return result;
+}
+
+fn get_herecomment(string_contents : &str, index : &mut uint) -> ~str {
+    let mut result = expect(string_contents, index, "###");
+    // Just keep going no matter what, until you hit the end or find ###.
+    loop {
+        let ch = string_contents[*index] as char;
+        result = result + std::str::from_char(ch);
+        if ch == '#' {
+            if string_contents[*index + 1] as char == '#' && string_contents[*index + 2] as char == '#' {
+                result = result + expect(string_contents, index, "###");
+                return "HERECOMMENT: ".to_owned() + result;
+            }
+        }
+        *index = *index + 1;
+        if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
     }
 }
