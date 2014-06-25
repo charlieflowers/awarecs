@@ -19,8 +19,14 @@ struct Token {
 }
 
 impl Token {
-    fn new(tag: TokenTag, value: ~str, length: uint, index: uint) -> Token {
-        Token {tag:tag, value:value, length:length, index:index}
+    // fn new(tag: TokenTag, value: ~str, length: uint, index: uint) -> Token {
+    //     Token {tag:tag, value:value, length:length, index:index}
+    // }
+    fn make(tag: TokenTag, value: ~str, endingIndex: uint) -> Token {
+        let fucking_len = value.len();
+        let fucking_index = endingIndex - fucking_len;
+
+        Token {tag:tag, value:value, length: fucking_len, index: fucking_index}
     }
 }
 
@@ -70,14 +76,14 @@ fn get_whitespace(string_contents : &str, index : &mut uint) -> Token {
 
     if value.len() == 0  { fail!("You are not supposed to call get_whitespace unless you know you got some. But I found zero characters of whitespace.")}
 
-    return Token::new(Whitespace, value, value.len(), *index - value.len() )
+    return Token::make(Whitespace, value, *index);
 }
 
 fn get_number(string_contents : &str, index : &mut uint) -> Token {
     let mut value = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
-        if ch.is_whitespace() { return "Number: ".to_owned() + value; }
+        if ch.is_whitespace() { return Token::make(Number, value, *index); }
         if ! ch.is_digit() { fail!("Found a {} right in the middle of an expected number. Can't do that.", ch)}
         value = value + std::str::from_char(ch);
         *index = *index + 1;
@@ -89,7 +95,7 @@ fn get_operator(string_contents : &str, index : &mut uint) -> Token {
     let mut result = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
-        if ch.is_whitespace() { return "Operator: ".to_owned() + result; }
+        if ch.is_whitespace() { return Token::make(Operator, result, *index); }
         if ch != '+' && ch != '-' { fail!("I thought I was parsing an result, but I found this in it: {}", ch)}
         result = result + std::str::from_char(ch);
         *index = *index + 1;
@@ -107,14 +113,14 @@ fn get_comment(string_contents : &str, index : &mut uint) -> Token {
         let ch = string_contents[*index] as char;
         result = result + std::str::from_char(ch);
         *index = *index + 1;
-        if ch == '\n' { return "Comment: ".to_owned() + result; }
+        if ch == '\n' { return  Token::make(Comment, result, *index);}
         if *index >= string_contents.len() { fail!("Inside get_comment, we ran past end of parser input and were planning to keep going.");}
     }
 }
 
-fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> Token {
+fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> ~str {
     let my_slice = string_contents.slice_from(*index);
-    println!("expecting! At index {}, expecting {} from {}.", *index, expectation, my_slice);
+    // println!("expecting! At index {}, expecting {} from {}.", *index, expectation, my_slice);
 
     if ! my_slice.starts_with(expectation) { fail!("At index {}, expected {} but got \r\n {}.", *index, expectation, string_contents.slice_from(*index))}
 
@@ -132,12 +138,15 @@ fn get_herecomment(string_contents : &str, index : &mut uint) -> Token {
     let mut result = expect(string_contents, index, "###");
     // Just keep going no matter what, until you hit the end or find ###.
     loop {
+        // println!("in mystery loop, index is {}", *index);
+        // println!("the rest of the string is {}", string_contents.slice_from(*index));
         let ch = string_contents[*index] as char;
         result = result + std::str::from_char(ch);
         if ch == '#' {
             if string_contents[*index + 1] as char == '#' && string_contents[*index + 2] as char == '#' {
                 result = result + expect(string_contents, index, "###");
-                return "HERECOMMENT: ".to_owned() + result;
+                // println!("second expect completed, and result is: {}", result);
+                return  Token::make(Herecomment, result, *index);
             }
         }
         *index = *index + 1;
