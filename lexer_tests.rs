@@ -1,4 +1,4 @@
-use lex::{Lexer, Token, TokenTag, Number, Operator};
+use lex::{Lexer, Token, Number, Operator};
 mod lex;
 
 #[test]
@@ -8,10 +8,11 @@ fn some_test() {
 
 #[test]
 fn hello_lex() {
-    let code = r#"40 + 2"#;
+    let code = r#"40 + 2
+"#;
     let lexer = get_lexer();
     let tokens = lexer.lex(code);
-    assertTokensMatch(tokens, vec!["Number 40", "Operator +", "Number 2"]);
+    assertTokensMatch(tokens, vec!["Number: 40", "Whitespace:  ", "Operator: +", "Whitespace:  ", "Number: 2"]);
 }
 
 #[test]

@@ -1,5 +1,4 @@
-extern crate std;
-use std::str;
+extern crate std; // Don't know why on earth I need this line based on Rust docs, but I do.
 
 pub struct Lexer {
     meaningOfLife: uint
@@ -42,8 +41,6 @@ impl Lexer {
     }
 
     pub fn lex(&self, code:&str) -> Vec<Token> {
-        use std::io::File;
-
         // let file_bytes = File::open(&Path::new("charlie-to-parse.txt")).read_to_end().unwrap();
 
         // let contents = file_bytes.as_slice();
