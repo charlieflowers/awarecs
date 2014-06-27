@@ -95,8 +95,7 @@ fn get_number(string_contents : &str, index : &mut uint) -> Token {
     let mut value = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
-        if ch.is_whitespace() { return Token::make(Number, value, *index); }
-        if ! ch.is_digit() { fail!("Found a {} right in the middle of an expected number. Can't do that.", ch)}
+        if ! ch.is_digit() { return Token::make(Number, value, *index); }
         value = value + std::str::from_char(ch);
         *index = *index + 1;
         if *index >= string_contents.len() { fail!("Inside get_number, we ran past end of parser input and were planning to keep going.");}
@@ -107,8 +106,7 @@ fn get_operator(string_contents : &str, index : &mut uint) -> Token {
     let mut result = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
-        if ch.is_whitespace() { return Token::make(Operator, result, *index); }
-        if ch != '+' && ch != '-' { fail!("I thought I was parsing an result, but I found this in it: {}", ch)}
+        if ch != '+' && ch != '-' { return Token::make(Operator, result, *index); }
         result = result + std::str::from_char(ch);
         *index = *index + 1;
         if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}

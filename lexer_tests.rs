@@ -16,6 +16,15 @@ fn hello_lex() {
 }
 
 #[test]
+fn formula_with_no_spaces_should_succeed() {
+    let code = r#"40+2
+"#;
+    let lexer = get_lexer();
+    let tokens = lexer.lex(code);
+    assertTokensMatch(tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+}
+
+#[test]
 fn assertTokensMatch_happy_path() {
     let myTokens = vec![
         Token::make(Number, "40".to_owned(), 77),
@@ -33,7 +42,7 @@ fn assertTokensMatch_should_fail() {
         Token::make(Operator, "+".to_owned(), 77),
         Token::make(Number, "2".to_owned(), 77)];
 
-    assertTokensMatch(myTokens, vec!["WrongStuff +"]);
+    assertTokensMatch(myTokens, vec!["[WrongStuff +]"]);
 }
 
 fn get_lexer() -> Lexer {
@@ -45,7 +54,6 @@ fn assertTokensMatch(actualTokens: Vec<Token>, expectations: Vec<&'static str>) 
     let mut actualIter = actualTokens.iter();
     for expect in expectations.iter() {
         let token = actualIter.idx(index).unwrap();
-
         assert_eq!(token.text, expect.to_owned());
         index = index + 1;
     }
