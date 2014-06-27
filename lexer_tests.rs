@@ -12,7 +12,7 @@ fn hello_lex() {
 "#;
     let lexer = get_lexer();
     let tokens = lexer.lex(code);
-    assertTokensMatch(tokens, vec!["Number: 40", "Whitespace:  ", "Operator: +", "Whitespace:  ", "Number: 2"]);
+    assertTokensMatch(tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
 }
 
 #[test]
@@ -22,7 +22,7 @@ fn assertTokensMatch_happy_path() {
         Token::make(Operator, "+".to_owned(), 77),
         Token::make(Number, "2".to_owned(), 77)];
 
-    assertTokensMatch(myTokens, vec!["Number: 40", "Operator: +", "Number: 2"]);
+    assertTokensMatch(myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
 #[test]

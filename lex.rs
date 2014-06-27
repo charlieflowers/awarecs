@@ -31,7 +31,7 @@ impl Token {
         let fucking_index = endingIndex - fucking_len;
 
         Token {tag:tag, value:value.to_owned(), length: fucking_len, index: fucking_index,
-               text: tag.to_str().to_owned() + ": ".to_owned() + value.to_owned()}
+               text: "[".to_owned() + tag.to_str().to_owned() + " ".to_owned() + value.to_owned() + "]".to_owned()}
     }
 }
 
