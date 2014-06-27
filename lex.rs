@@ -16,9 +16,9 @@ pub enum TokenTag {
 #[deriving(Show)]
 pub struct Token {
     pub tag: TokenTag,
-    value: ~str,
-    length: uint,
-    index: uint,
+    pub value: ~str,
+    pub length: uint,
+    pub index: uint,
     pub text: ~str
 }
 
