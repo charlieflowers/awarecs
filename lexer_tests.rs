@@ -45,6 +45,14 @@ fn assertTokensMatch_should_fail() {
     assertTokensMatch(myTokens, vec!["[WrongStuff +]"]);
 }
 
+#[test]
+fn should_handle_number_against_eof() {
+    let code = r#"40+2"#;
+    let lexer = get_lexer();
+    assertTokensMatch(lexer.lex(code), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+}
+// /////////////////////////////////////////////////////////////////////////////////////////////////
+
 fn get_lexer() -> Lexer {
     Lexer::new()
 }

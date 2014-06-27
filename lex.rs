@@ -95,10 +95,11 @@ fn get_number(string_contents : &str, index : &mut uint) -> Token {
     let mut value = "".to_owned();
     loop {
         let ch = string_contents[*index] as char;
-        if ! ch.is_digit() { return Token::make(Number, value, *index); }
-        value = value + std::str::from_char(ch);
-        *index = *index + 1;
-        if *index >= string_contents.len() { fail!("Inside get_number, we ran past end of parser input and were planning to keep going.");}
+        if ch.is_digit() {
+            value = value + std::str::from_char(ch);
+            *index = *index + 1;
+        }
+        if ! ch.is_digit() || *index >= string_contents.len()  { return Token::make(Number, value, *index); }
     }
 }
 
