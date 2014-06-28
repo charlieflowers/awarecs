@@ -190,11 +190,12 @@ pub mod chomp {
             Chomper{code: code, index: 0}
         }
 
-        pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+        pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> Option<ChompResult<'lt>> {
+            if self.index >= self.code.len() { return None; }
             let startIndex = self.index;
             loop {
                 if self.index == self.code.len() || quit(self.code[self.index] as char) {
-                    return ChompResult { value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
+                    return Some(ChompResult { value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index });
                 }
                 self.index = self.index + 1;
             }
