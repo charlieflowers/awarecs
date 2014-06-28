@@ -16,3 +16,13 @@ fn chomp_till_should_work_correctly_when_not_hitting_eof() {
 
     assert_eq!(result.value, "40");
 }
+
+#[test]
+fn chomp_till_should_work_correctly_when_hitting_eof() {
+    let code = "40";
+    let mut chomper = lex::chomp::Chomper::new(code);
+
+    let result = chomper.chompTill(|ch| { ! ch.is_digit() });
+
+    assert_eq!(result.value, "40");
+}

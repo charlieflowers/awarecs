@@ -193,8 +193,7 @@ pub mod chomp {
         pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
             let startIndex = self.index;
             loop {
-                let ch = self.code[self.index] as char;
-                if self.index == self.code.len() - 1 || quit(ch) {
+                if self.index == self.code.len() || quit(self.code[self.index] as char) {
                     return ChompResult { value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
                 }
                 self.index = self.index + 1;
