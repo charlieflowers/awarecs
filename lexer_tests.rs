@@ -26,10 +26,11 @@ fn formula_with_no_spaces_should_succeed() {
 
 #[test]
 fn assertTokensMatch_happy_path() {
+    let code = "40+2";
     let myTokens = vec![
-        Token::make(Number, "40".to_owned(), 77),
-        Token::make(Operator, "+".to_owned(), 77),
-        Token::make(Number, "2".to_owned(), 77)];
+        Token::make(code, Number, 0, 2),
+        Token::make(code, Operator, 2, 3),
+        Token::make(code, Number, 3, 4)];
 
     assertTokensMatch(myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
@@ -37,10 +38,11 @@ fn assertTokensMatch_happy_path() {
 #[test]
 #[should_fail]
 fn assertTokensMatch_should_fail() {
+    let code = "40+2";
     let myTokens = vec![
-        Token::make(Number, "40".to_owned(), 77),
-        Token::make(Operator, "+".to_owned(), 77),
-        Token::make(Number, "2".to_owned(), 77)];
+        Token::make(code, Number, 0, 2),
+        Token::make(code, Operator, 2, 3),
+        Token::make(code, Number, 3, 4)];
 
     assertTokensMatch(myTokens, vec!["[WrongStuff +]"]);
 }

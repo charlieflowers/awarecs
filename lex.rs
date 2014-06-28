@@ -43,7 +43,7 @@ impl Lexer {
         Lexer {meaningOfLife: 42}
     }
 
-    pub fn lex(&self, code:&str) -> Vec<Token> {
+    pub fn lex<'a>(&self, code:&'a str) -> Vec<Token<'a>> {
         // let file_bytes = File::open(&Path::new("charlie-to-parse.txt")).read_to_end().unwrap();
 
         // let contents = file_bytes.as_slice();
@@ -76,7 +76,8 @@ impl Lexer {
     }
 }
 
-fn get_whitespace(string_contents : &str, index : &mut uint) -> Token {
+fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+    let startIndex = *index;
     let mut value = "".to_owned();
     loop {
         if *index >= string_contents.len() {break};
@@ -91,33 +92,36 @@ fn get_whitespace(string_contents : &str, index : &mut uint) -> Token {
 
     if value.len() == 0  { fail!("You are not supposed to call get_whitespace unless you know you got some. But I found zero characters of whitespace.")}
 
-    return Token::make(Whitespace, value, *index);
+    return Token::make(string_contents, Whitespace, startIndex, *index);
 }
 
-fn get_number(string_contents : &str, index : &mut uint) -> Token {
+fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
     let mut value = "".to_owned();
+    let startIndex = *index;
     loop {
         let ch = string_contents[*index] as char;
         if ch.is_digit() {
             value = value + std::str::from_char(ch);
             *index = *index + 1;
         }
-        if ! ch.is_digit() || *index >= string_contents.len()  { return Token::make(Number, value, *index); }
+        if ! ch.is_digit() || *index >= string_contents.len()  { return Token::make(string_contents, Number, startIndex, *index); }
     }
 }
 
-fn get_operator(string_contents : &str, index : &mut uint) -> Token {
+fn get_operator<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
     let mut result = "".to_owned();
+    let startIndex = *index;
     loop {
         let ch = string_contents[*index] as char;
-        if ch != '+' && ch != '-' { return Token::make(Operator, result, *index); }
+        if ch != '+' && ch != '-' { return Token::make(string_contents, Operator, startIndex, *index); }
         result = result + std::str::from_char(ch);
         *index = *index + 1;
         if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}
     }
 }
 
-fn get_comment(string_contents : &str, index : &mut uint) -> Token {
+fn get_comment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+    let startIndex = *index;
     let first_ch = string_contents[*index] as char;
     if first_ch != '#' { fail!("I thought I was parsing a comment, but it starts with this: {}", first_ch)}
     let next_ch = string_contents[*index + 1] as char;
@@ -127,7 +131,7 @@ fn get_comment(string_contents : &str, index : &mut uint) -> Token {
         let ch = string_contents[*index] as char;
         result = result + std::str::from_char(ch);
         *index = *index + 1;
-        if ch == '\n' { return  Token::make(Comment, result, *index);}
+        if ch == '\n' { return  Token::make(string_contents, Comment, startIndex, *index);}
         if *index >= string_contents.len() { fail!("Inside get_comment, we ran past end of parser input and were planning to keep going.");}
     }
 }
@@ -148,7 +152,8 @@ fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> ~str
     return result;
 }
 
-fn get_herecomment(string_contents : &str, index : &mut uint) -> Token {
+fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+    let startIndex = *index;
     let mut result = expect(string_contents, index, "###");
     // Just keep going no matter what, until you hit the end or find ###.
     loop {
@@ -160,7 +165,7 @@ fn get_herecomment(string_contents : &str, index : &mut uint) -> Token {
             if string_contents[*index + 1] as char == '#' && string_contents[*index + 2] as char == '#' {
                 result = result + expect(string_contents, index, "###");
                 // println!("second expect completed, and result is: {}", result);
-                return  Token::make(Herecomment, result, *index);
+                return  Token::make(string_contents, Herecomment, startIndex, *index);
             }
         }
         *index = *index + 1;
