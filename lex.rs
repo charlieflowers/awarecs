@@ -14,24 +14,27 @@ pub enum TokenTag {
 }
 
 #[deriving(Show)]
-pub struct Token {
+pub struct Token<'eddie> {
     pub tag: TokenTag,
-    pub value: ~str,
-    pub length: uint,
-    pub index: uint,
+    pub value: &'eddie str,
+    pub startingIndex: uint,
+    pub endingIndex: uint,
     pub text: ~str
 }
 
-impl Token {
+impl<'eddie> Token<'eddie> {
     // fn new(tag: TokenTag, value: ~str, length: uint, index: uint) -> Token {
     //     Token {tag:tag, value:value, length:length, index:index}
     // }
-    pub fn make(tag: TokenTag, value: &str, endingIndex: uint) -> Token {
-        let fucking_len = value.len();
-        let fucking_index = endingIndex - fucking_len;
+    pub fn make<'eddie>(code: &'eddie str, tag: TokenTag, startingIndex: uint, endingIndex: uint) -> Token<'eddie> {
+        // let fucking_len = value.len();
+        // let fucking_index = endingIndex - fucking_len;
 
-        Token {tag:tag, value:value.to_owned(), length: fucking_len, index: fucking_index,
-               text: "[".to_owned() + tag.to_str().to_owned() + " ".to_owned() + value.to_owned() + "]".to_owned()}
+        // Token {tag:tag, value:value.to_owned(), length: fucking_len, index: fucking_index,
+        //        text: "[".to_owned() + tag.to_str().to_owned() + " ".to_owned() + value.to_owned() + "]".to_owned()}
+        let slice = code.slice(startingIndex, endingIndex);
+        Token {tag:tag, value: slice, startingIndex: startingIndex,
+               endingIndex: endingIndex, text: ("[" + tag.to_str() + " " + slice.to_owned() + "]").to_owned()}
     }
 }
 
