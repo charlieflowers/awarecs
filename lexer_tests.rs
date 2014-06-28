@@ -12,7 +12,15 @@ fn hello_lex() {
 "#;
     let lexer = get_lexer();
     let tokens = lexer.lex(code);
-    assertTokensMatch(tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
+    assertTokensMatch(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
+}
+
+fn dumpTokensToConsole(tokens: Vec<Token> ) {
+    let mut index = 1;
+    for t in tokens.iter() {
+        println!("Token {} is {}", index, t.text);
+        index = index + 1;
+    }
 }
 
 #[test]
@@ -21,7 +29,7 @@ fn formula_with_no_spaces_should_succeed() {
 "#;
     let lexer = get_lexer();
     let tokens = lexer.lex(code);
-    assertTokensMatch(tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+    assertTokensMatch(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
 #[test]
@@ -32,7 +40,7 @@ fn assertTokensMatch_happy_path() {
         Token::make(code, Operator, 2, 3),
         Token::make(code, Number, 3, 4)];
 
-    assertTokensMatch(myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+    assertTokensMatch(&myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
 #[test]
@@ -44,14 +52,14 @@ fn assertTokensMatch_should_fail() {
         Token::make(code, Operator, 2, 3),
         Token::make(code, Number, 3, 4)];
 
-    assertTokensMatch(myTokens, vec!["[WrongStuff +]"]);
+    assertTokensMatch(&myTokens, vec!["[WrongStuff +]"]);
 }
 
 #[test]
 fn should_handle_number_against_eof() {
     let code = r#"40+2"#;
     let lexer = get_lexer();
-    assertTokensMatch(lexer.lex(code), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+    assertTokensMatch(&lexer.lex(code), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -59,7 +67,7 @@ fn get_lexer() -> Lexer {
     Lexer::new()
 }
 
-fn assertTokensMatch(actualTokens: Vec<Token>, expectations: Vec<&'static str>) {
+fn assertTokensMatch(actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
     let mut index = 0;
     let mut actualIter = actualTokens.iter();
     for expect in expectations.iter() {
