@@ -175,9 +175,9 @@ fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a
 
 pub mod chomp {
     pub struct ChompResult<'lt> {
-        value: &'lt str,
-        startIndex: uint,
-        endIndex: uint
+        pub value: &'lt str,
+        pub startIndex: uint,
+        pub endIndex: uint
     }
 
     pub struct Chomper<'lt> {
