@@ -172,3 +172,33 @@ fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a
         if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
     }
 }
+
+pub mod chomp {
+    pub struct ChompResult<'lt> {
+        value: &'lt str,
+        startIndex: uint,
+        endIndex: uint
+    }
+
+    pub struct Chomper<'lt> {
+        code: &'lt str,
+        index: uint
+    }
+
+    impl<'lt> Chomper<'lt> {
+        pub fn new<'lt>(code: &'lt str) -> Chomper<'lt> {
+            Chomper{code: code, index: 0}
+        }
+
+        pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+            let startIndex = self.index;
+            loop {
+                let ch = self.code[self.index] as char;
+                if self.index == self.code.len() - 1 || quit(ch) {
+                    return ChompResult { value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
+                }
+                self.index = self.index + 1;
+            }
+        }
+    }
+}
