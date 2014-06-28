@@ -32,11 +32,12 @@ fn chomp_till_should_return_none_if_youre_already_at_eof_when_you_call_it() {
     let code = "40";
     let mut chomper = lex::chomp::Chomper::new(code);
 
-    let result = chomper.chompTill(|ch| { false}).unwrap();
-
-    assert_eq!(result.value, "40");
+    {
+        let result = chomper.chompTill (|ch| { false}).unwrap ();
+        assert_eq!(result.value, "40");
+    }
 
     let after_eof = chomper.chompTill(|ch| { false });
 
-    assert_eq!(after_eof, None);
+    assert_eq!(after_eof.is_none(), true);
 }
