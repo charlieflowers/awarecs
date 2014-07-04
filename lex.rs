@@ -235,7 +235,10 @@ pub mod chomp {
 
             loop {
                 let should_quit = match self.char_iterator.next() {
-                    None => true,
+                    None => {
+                        endIndex = Some(endIndex.unwrap() + 1);
+                        true
+                    },
                     Some((i, ch)) => {
                         if(startIndex == None) { startIndex = Some(i);}
                         endIndex = Some(i);
