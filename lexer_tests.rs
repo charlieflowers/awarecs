@@ -61,6 +61,7 @@ fn should_handle_number_against_eof() {
     let lexer = get_lexer();
     assertTokensMatch(&lexer.lex(code), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn get_lexer() -> Lexer {

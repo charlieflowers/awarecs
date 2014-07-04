@@ -1,5 +1,9 @@
 extern crate std; // Don't know why on earth I need this line based on Rust docs, but I do.
 
+use std::iter;
+use std::io;
+use std::str;
+
 pub struct Lexer {
     meaningOfLife: uint
 }
@@ -174,6 +178,9 @@ fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a
 }
 
 pub mod chomp {
+    pub use std::str::{Chars};
+    pub use std::iter::{Enumerate};
+
     pub struct ChompResult<'lt> {
         pub value: &'lt str,
         pub startIndex: uint,
@@ -182,22 +189,66 @@ pub mod chomp {
 
     pub struct Chomper<'lt> {
         code: &'lt str,
-        index: uint
+        index: uint,
+        char_iterator: Enumerate<Chars<'lt>>,
     }
 
     impl<'lt> Chomper<'lt> {
-        pub fn new<'lt>(code: &'lt str) -> Chomper<'lt> {
-            Chomper{code: code, index: 0}
+        pub fn new<'lt>(code: &'lt str) -> Box<Chomper<'lt>> {
+            box Chomper{code: code, index: 0, char_iterator: code.chars().enumerate()}
         }
 
-        pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> Option<ChompResult<'lt>> {
-            if self.index >= self.code.len() { return None; }
-            let startIndex = self.index;
+        pub fn isEof<'lt>(&'lt self) -> bool {
+            self.index >= self.code.len()
+        }
+
+        fn assertNotEof<'lt>(&'lt self) {
+            if self.isEof() {fail!("Chomper is at EOF."); }
+        }
+
+        // pub fn chompTillOne<'lt>(mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+        //     self.assertNotEof();
+        //     let startIndex = self.index;
+        //     loop {
+        //         if self.index == self.code.len() || quit(self.code[self.index] as char) {
+        //             return ChompResult{ value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
+        //         }
+        //         self.index = self.index + 1;
+        //     }
+        // }
+
+        // pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+        //     self.assertNotEof();
+        //     let startIndex = self.index;
+        //     loop {
+        //         if self.index == self.code.len() || quit(self.code[self.index] as char) {
+        //             return ChompResult{ value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
+        //         }
+        //         self.index = self.index + 1;
+        //     }
+        // }
+
+        pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+            self.assertNotEof();
+            let mut startIndex: Option<uint> = None;
+            let mut endIndex: Option<uint> = None;
+
             loop {
-                if self.index == self.code.len() || quit(self.code[self.index] as char) {
-                    return Some(ChompResult { value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index });
+                let should_quit = match self.char_iterator.next() {
+                    None => true,
+                    Some((i, ch)) => {
+                        if(startIndex == None) { startIndex = Some(i);}
+                        endIndex = Some(i);
+                        quit (ch)
+                    }
+                };
+
+                if should_quit {
+                    return ChompResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
+                                        startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() };
                 }
-                self.index = self.index + 1;
+
+                // Of course, we have to figure out a plan for the index, todo charlie
             }
         }
     }
