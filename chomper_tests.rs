@@ -59,19 +59,19 @@ fn chomp_till_should_work_correctly_when_hitting_eof() {
 //     // fail!("show me output");
 // }
 
-// #[test]
-// #[should_fail]
-// fn chomp_till_should_return_none_if_youre_already_at_eof_when_you_call_it() {
-//     let code = "40";
-//     let mut chomper : & mut lex::chomp::Chomper = lex::chomp::Chomper::new(code);
+#[test]
+#[should_fail]
+fn chomp_till_should_return_none_if_youre_already_at_eof_when_you_call_it() {
+    let code = "40";
+    let mut chomper = lex::chomp::Chomper::new(code);
 
-//     // {
-//         let result = chomper.chompTill (|ch| { false});
-//         assert_eq!(result.value, "40");
-//     // }
+    {
+        let result = chomper.chompTill (|_| { false});
+        assert_eq!(result.value, "40");
+    }
 
-//     let after_eof = chomper.chompTill(|ch| { false });
-// }
+    chomper.chompTill(|_| { false });
+}
 
 #[test]
 fn does_chars_iterator_handle_lifetimes_more_tightly() {

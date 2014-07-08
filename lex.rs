@@ -27,15 +27,7 @@ pub struct Token<'eddie> {
 }
 
 impl<'eddie> Token<'eddie> {
-    // fn new(tag: TokenTag, value: ~str, length: uint, index: uint) -> Token {
-    //     Token {tag:tag, value:value, length:length, index:index}
-    // }
     pub fn make<'eddie>(code: &'eddie str, tag: TokenTag, startingIndex: uint, endingIndex: uint) -> Token<'eddie> {
-        // let fucking_len = value.len();
-        // let fucking_index = endingIndex - fucking_len;
-
-        // Token {tag:tag, value:value.to_owned(), length: fucking_len, index: fucking_index,
-        //        text: "[".to_owned() + tag.to_str().to_owned() + " ".to_owned() + value.to_owned() + "]".to_owned()}
         let slice = code.slice(startingIndex, endingIndex);
         Token {tag:tag, value: slice, startingIndex: startingIndex,
                endingIndex: endingIndex, text: ("[" + tag.to_str() + " " + slice.to_owned() + "]").to_owned()}
@@ -48,13 +40,6 @@ impl Lexer {
     }
 
     pub fn lex<'a>(&self, code:&'a str) -> Vec<Token<'a>> {
-        // let file_bytes = File::open(&Path::new("charlie-to-parse.txt")).read_to_end().unwrap();
-
-        // let contents = file_bytes.as_slice();
-        // println!("The slice is {}", contents);
-
-        // let string_contents = str::from_utf8(contents).unwrap();
-
         let index : &mut uint = &mut 0;
         let mut tokens : Vec<Token> = vec![];
 
@@ -71,8 +56,6 @@ impl Lexer {
                 _ => {fail!("unable to match char {} at index {}", next_char, *index)}
             };
 
-            // println!("Got token: {}", token);
-            // println!("After getting token, index is {}", *index);
             tokens.push(token);
         }
 
@@ -191,19 +174,16 @@ pub mod chomp {
         code: &'lt str,
         index: uint,
         char_iterator: Enumerate<Chars<'lt>>,
+        isEof: bool,
     }
 
     impl<'lt> Chomper<'lt> {
-        pub fn new<'lt>(code: &'lt str) -> Box<Chomper<'lt>> {
-            box Chomper{code: code, index: 0, char_iterator: code.chars().enumerate()}
-        }
-
-        pub fn isEof<'lt>(&'lt self) -> bool {
-            self.index >= self.code.len()
+        pub fn new<'lt>(code: &'lt str) -> Chomper<'lt> {
+            Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), isEof: false}
         }
 
         fn assertNotEof<'lt>(&'lt self) {
-            if self.isEof() {fail!("Chomper is at EOF."); }
+            if self.isEof {fail!("Chomper is at EOF."); }
         }
 
         // pub fn chompTillOne<'lt>(mut self, quit: |char| -> bool) -> ChompResult<'lt> {
@@ -228,19 +208,27 @@ pub mod chomp {
         //     }
         // }
 
+        pub fn next(&mut self) -> Option<(uint, char)> {
+            self.assertNotEof();
+            let result = self.char_iterator.next();
+            if result == None { self.isEof = true; }
+            return result;
+        }
+
+        #[inline]
         pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
             self.assertNotEof();
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
 
             loop {
-                let should_quit = match self.char_iterator.next() {
+                let should_quit = match self.next() {
                     None => {
                         endIndex = Some(endIndex.unwrap() + 1);
                         true
                     },
                     Some((i, ch)) => {
-                        if(startIndex == None) { startIndex = Some(i);}
+                        if startIndex == None { startIndex = Some(i);}
                         endIndex = Some(i);
                         quit (ch)
                     }
@@ -250,8 +238,6 @@ pub mod chomp {
                     return ChompResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
                                         startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() };
                 }
-
-                // Of course, we have to figure out a plan for the index, todo charlie
             }
         }
     }
