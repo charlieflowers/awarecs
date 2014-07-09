@@ -3,6 +3,7 @@ extern crate std; // Don't know why on earth I need this line based on Rust docs
 use std::iter;
 use std::io;
 use std::str;
+use std::string;
 
 pub struct Lexer {
     meaningOfLife: uint
@@ -23,14 +24,14 @@ pub struct Token<'eddie> {
     pub value: &'eddie str,
     pub startingIndex: uint,
     pub endingIndex: uint,
-    pub text: ~str
+    pub text: String
 }
 
 impl<'eddie> Token<'eddie> {
     pub fn make<'eddie>(code: &'eddie str, tag: TokenTag, startingIndex: uint, endingIndex: uint) -> Token<'eddie> {
         let slice = code.slice(startingIndex, endingIndex);
         Token {tag:tag, value: slice, startingIndex: startingIndex,
-               endingIndex: endingIndex, text: ("[" + tag.to_str() + " " + slice.to_owned() + "]").to_owned()}
+               endingIndex: endingIndex, text: ("[".to_string() + tag.to_string() + " " + slice.to_string() + "]").to_string()}
     }
 }
 
@@ -45,7 +46,7 @@ impl Lexer {
 
         loop {
             if *index >= code.len()  { break; }
-            let next_char = code[*index] as char;
+            let next_char = code.char_at(*index);
             println!("char {} is {}.", next_char, *index);
 
             let token = match next_char {
@@ -65,10 +66,10 @@ impl Lexer {
 
 fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
     let startIndex = *index;
-    let mut value = "".to_owned();
+    let mut value = "".to_string();
     loop {
         if *index >= string_contents.len() {break};
-        let ch = string_contents[*index] as char;
+        let ch = string_contents.char_at(*index);
         if ! ch.is_whitespace() {
             break;
         } else {
@@ -83,10 +84,10 @@ fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a>
 }
 
 fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let mut value = "".to_owned();
+    let mut value = "".to_string();
     let startIndex = *index;
     loop {
-        let ch = string_contents[*index] as char;
+        let ch = string_contents.char_at(*index);
         if ch.is_digit() {
             value = value + std::str::from_char(ch);
             *index = *index + 1;
@@ -96,10 +97,10 @@ fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
 }
 
 fn get_operator<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let mut result = "".to_owned();
+    let mut result = "".to_string();
     let startIndex = *index;
     loop {
-        let ch = string_contents[*index] as char;
+        let ch = string_contents.char_at(*index);
         if ch != '+' && ch != '-' { return Token::make(string_contents, Operator, startIndex, *index); }
         result = result + std::str::from_char(ch);
         *index = *index + 1;
@@ -109,13 +110,13 @@ fn get_operator<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
 
 fn get_comment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
     let startIndex = *index;
-    let first_ch = string_contents[*index] as char;
+    let first_ch = string_contents.char_at(*index);
     if first_ch != '#' { fail!("I thought I was parsing a comment, but it starts with this: {}", first_ch)}
-    let next_ch = string_contents[*index + 1] as char;
+    let next_ch = string_contents.char_at(*index + 1);
     if next_ch == '#' { return get_herecomment(string_contents, index); }
-    let mut result = "".to_owned();
+    let mut result = "".to_string();
     loop {
-        let ch = string_contents[*index] as char;
+        let ch = string_contents.char_at(*index);
         result = result + std::str::from_char(ch);
         *index = *index + 1;
         if ch == '\n' { return  Token::make(string_contents, Comment, startIndex, *index);}
@@ -123,16 +124,16 @@ fn get_comment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
     }
 }
 
-fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> ~str {
+fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> String {
     let my_slice = string_contents.slice_from(*index);
     // println!("expecting! At index {}, expecting {} from {}.", *index, expectation, my_slice);
 
     if ! my_slice.starts_with(expectation) { fail!("At index {}, expected {} but got \r\n {}.", *index, expectation, string_contents.slice_from(*index))}
 
-    let mut result = "".to_owned();
+    let mut result = "".to_string();
     // todo charlie of course its crazy to append char by char
     for n in range(0, expectation.len()) {
-        let actual = my_slice[n] as char;
+        let actual = my_slice.char_at(n);
         result = result + std::str::from_char(actual);
         *index = *index + 1;
     }
@@ -146,10 +147,10 @@ fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a
     loop {
         // println!("in mystery loop, index is {}", *index);
         // println!("the rest of the string is {}", string_contents.slice_from(*index));
-        let ch = string_contents[*index] as char;
+        let ch = string_contents.char_at(*index);
         result = result + std::str::from_char(ch);
         if ch == '#' {
-            if string_contents[*index + 1] as char == '#' && string_contents[*index + 2] as char == '#' {
+            if string_contents.char_at(*index + 1) == '#' && string_contents.char_at(*index + 2) == '#' {
                 result = result + expect(string_contents, index, "###");
                 // println!("second expect completed, and result is: {}", result);
                 return  Token::make(string_contents, Herecomment, startIndex, *index);
@@ -182,12 +183,12 @@ pub mod chomp {
             Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), isEof: false}
         }
 
-        fn assertNotEof<'lt>(&'lt self) {
+        fn assert_not_eof<'lt>(&'lt self) {
             if self.isEof {fail!("Chomper is at EOF."); }
         }
 
-        // pub fn chompTillOne<'lt>(mut self, quit: |char| -> bool) -> ChompResult<'lt> {
-        //     self.assertNotEof();
+        // pub fn chomp_tillOne<'lt>(mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+        //     self.assert_not_eof();
         //     let startIndex = self.index;
         //     loop {
         //         if self.index == self.code.len() || quit(self.code[self.index] as char) {
@@ -197,8 +198,8 @@ pub mod chomp {
         //     }
         // }
 
-        // pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
-        //     self.assertNotEof();
+        // pub fn chomp_till<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+        //     self.assert_not_eof();
         //     let startIndex = self.index;
         //     loop {
         //         if self.index == self.code.len() || quit(self.code[self.index] as char) {
@@ -209,15 +210,15 @@ pub mod chomp {
         // }
 
         pub fn next(&mut self) -> Option<(uint, char)> {
-            self.assertNotEof();
+            self.assert_not_eof();
             let result = self.char_iterator.next();
             if result == None { self.isEof = true; }
             return result;
         }
 
         #[inline]
-        pub fn chompTill<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
-            self.assertNotEof();
+        pub fn chomp_till<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+            self.assert_not_eof();
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
 

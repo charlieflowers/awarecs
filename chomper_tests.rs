@@ -15,7 +15,7 @@ fn chomp_till_should_work_correctly_when_not_hitting_eof() {
     let code = "40 + 2";
     let mut chomper = lex::chomp::Chomper::new(code);
 
-    let result = chomper.chompTill(|ch| { ! ch.is_digit() });
+    let result = chomper.chomp_till(|ch| { ! ch.is_digit() });
 
     assert_eq!(result.value, "40");
 }
@@ -25,7 +25,7 @@ fn chomp_till_should_work_correctly_when_hitting_eof() {
     let code = "40";
     let mut chomper = box lex::chomp::Chomper::new(code);
 
-    let result = chomper.chompTill(|ch| {
+    let result = chomper.chomp_till(|ch| {
         println!("Seeing if {} is a digit.", ch);
         ! ch.is_digit()
     });
@@ -66,11 +66,11 @@ fn chomp_till_should_return_none_if_youre_already_at_eof_when_you_call_it() {
     let mut chomper = lex::chomp::Chomper::new(code);
 
     {
-        let result = chomper.chompTill (|_| { false});
+        let result = chomper.chomp_till (|_| { false});
         assert_eq!(result.value, "40");
     }
 
-    chomper.chompTill(|_| { false });
+    chomper.chomp_till(|_| { false });
 }
 
 #[test]
