@@ -64,13 +64,16 @@ fn chomp_till_should_work_correctly_when_hitting_eof() {
 fn chomp_till_should_return_none_if_youre_already_at_eof_when_you_call_it() {
     let code = "40";
     let mut chomper = lex::chomp::Chomper::new(code);
+    // let chomper : &mut lex::chomp::Chomper = &mut lex::chomp::Chomper::new(code);
 
-    {
-        let result = chomper.chomp_till (|_| { false});
+    let chomper_borrow = &mut chomper;
+
+    // {
+        let result = chomper_borrow.chomp_till (|_| { false});
         assert_eq!(result.value, "40");
-    }
+    // }
 
-    chomper.chomp_till(|_| { false });
+    chomper_borrow.chomp_till(|_| { false });
 }
 
 #[test]
