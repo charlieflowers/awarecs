@@ -5,7 +5,7 @@ pub use std::iter::{Enumerate};
 pub struct ConsumeResult<'lt> {
     pub value: &'lt str,
     pub startIndex: uint,
-    pub endIndex: uint
+    pub endIndex: uint,
 }
 
 pub struct Scanner<'lt> {
@@ -61,5 +61,5 @@ fn main() {
     let mut scanner = Scanner::new(codeToScan);
     let first_token = scanner.consume_till(|c| { ! c.is_digit ()});
     println!("first token is: {}", first_token);
-    // scanner.consume_till(|c| { c.is_whitespace ()});
+    // scanner.consume_till(|c| { c.is_whitespace ()}); // WHY DOES THIS LINE FAIL?
 }
