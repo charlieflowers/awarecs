@@ -1,36 +1,39 @@
-pub use std::str::{Chars};
-pub use std::iter::{Enumerate};
+use std::str::{Chars};
+use std::iter::{Enumerate};
 
 #[deriving(Show)]
-pub struct ConsumeResult<'lt> {
-    pub value: &'lt str,
-    pub startIndex: uint,
-    pub endIndex: uint,
+struct ConsumeResult<'code_to_scan> {
+     value: &'code_to_scan str,
+     startIndex: uint,
+     endIndex: uint,
 }
 
-pub struct Scanner<'lt> {
-    code: &'lt str,
-    char_iterator: Enumerate<Chars<'lt>>,
+struct Scanner<'code_to_scan> {
+    code: &'code_to_scan str,
+    char_iterator: Enumerate<Chars<'code_to_scan>>,
     isEof: bool,
 }
 
-impl<'lt> Scanner<'lt> {
-    pub fn new<'lt>(code: &'lt str) -> Scanner<'lt> {
+impl<'code_to_scan> Scanner<'code_to_scan> {
+    fn new<'code_to_scan>(code: &'code_to_scan str) -> Scanner<'code_to_scan> {
         Scanner{code: code, char_iterator: code.chars().enumerate(), isEof: false}
     }
 
-    fn assert_not_eof<'lt>(&'lt self) {
+    fn assert_not_eof<'code_to_scan>(&'code_to_scan self) {
         if self.isEof {fail!("Scanner is at EOF."); }
     }
 
-    pub fn next(&mut self) -> Option<(uint, char)> {
+    fn next(&mut self) -> Option<(uint, char)> {
         self.assert_not_eof();
         let result = self.char_iterator.next();
         if result == None { self.isEof = true; }
         return result;
     }
 
-    pub fn consume_till<'lt>(&'lt mut self, quit: |char| -> bool) -> ConsumeResult<'lt> {
+    // the following line has a problem WHERE THE ARROWS ARE! Interesting, you don't need the lifetime in brackets, cuz it is elsewhere!
+    // fn consume_till<'code_to_scan>(&mut self, quit: |char| -> bool) -> ConsumeResult<'code_to_scan> {
+    // ...............^^^^^^^^^^^^^^^
+    fn consume_till(&mut self, quit: |char| -> bool) -> ConsumeResult<'code_to_scan> {
         self.assert_not_eof();
         let mut startIndex: Option<uint> = None;
         let mut endIndex: Option<uint> = None;
@@ -57,9 +60,17 @@ impl<'lt> Scanner<'lt> {
 }
 
 fn main() {
+    let test = "this is a string";
+    let mut iterator = test.chars();
+
+    iterator.next();
+    iterator.next();
+
+
     let codeToScan = "40 + 2";
     let mut scanner = Scanner::new(codeToScan);
     let first_token = scanner.consume_till(|c| { ! c.is_digit ()});
     println!("first token is: {}", first_token);
-    // scanner.consume_till(|c| { c.is_whitespace ()}); // WHY DOES THIS LINE FAIL?
+    let second_token = scanner.consume_till(|c| { c.is_whitespace ()});
+    println!("second token is: {}", second_token);
 }
