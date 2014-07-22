@@ -5,8 +5,9 @@ use std::io;
 use std::str;
 use std::string;
 
-pub struct Lexer {
-    meaningOfLife: uint
+pub struct Lexer<'lexer> {
+    code: &'lexer str,
+    chomper: chomp::Chomper<'lexer>,
 }
 
 #[deriving(Show)]
@@ -35,13 +36,14 @@ impl<'ti> Token<'ti> {
     }
 }
 
-impl Lexer {
-    pub fn new() -> Lexer {
-        Lexer {meaningOfLife: 42}
+impl<'li> Lexer<'li> {
+    pub fn new(code: &'li str) -> Lexer<'li> {
+        Lexer {code: code, chomper: chomp::Chomper::new(code)}
     }
 
     // TODO When you refactor lexer to hold on to the string it is lexing, remove all these fn lifetimes and replace with
     //  one single impl lifetime (similar to how you did with Chomper).
+
     pub fn lex<'fnlex>(&self, code:&'fnlex str) -> Vec<Token<'fnlex>> {
         let index : &mut uint = &mut 0;
         let mut tokens : Vec<Token> = vec![];
