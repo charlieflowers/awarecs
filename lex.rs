@@ -19,16 +19,16 @@ pub enum TokenTag {
 }
 
 #[deriving(Show)]
-pub struct Token<'eddie> {
+pub struct Token<'token> {
     pub tag: TokenTag,
-    pub value: &'eddie str,
+    pub value: &'token str,
     pub startingIndex: uint,
     pub endingIndex: uint,
     pub text: String
 }
 
-impl<'eddie> Token<'eddie> {
-    pub fn make<'eddie>(code: &'eddie str, tag: TokenTag, startingIndex: uint, endingIndex: uint) -> Token<'eddie> {
+impl<'ti> Token<'ti> {
+    pub fn make<'ti>(code: &'ti str, tag: TokenTag, startingIndex: uint, endingIndex: uint) -> Token<'ti> {
         let slice = code.slice(startingIndex, endingIndex);
         Token {tag:tag, value: slice, startingIndex: startingIndex,
                endingIndex: endingIndex, text: ("[".to_string() + tag.to_string() + " " + slice.to_string() + "]").to_string()}
@@ -40,7 +40,9 @@ impl Lexer {
         Lexer {meaningOfLife: 42}
     }
 
-    pub fn lex<'a>(&self, code:&'a str) -> Vec<Token<'a>> {
+    // TODO When you refactor lexer to hold on to the string it is lexing, remove all these fn lifetimes and replace with
+    //  one single impl lifetime (similar to how you did with Chomper).
+    pub fn lex<'fnlex>(&self, code:&'fnlex str) -> Vec<Token<'fnlex>> {
         let index : &mut uint = &mut 0;
         let mut tokens : Vec<Token> = vec![];
 
@@ -165,8 +167,8 @@ pub mod chomp {
     pub use std::str::{Chars};
     pub use std::iter::{Enumerate};
 
-    pub struct ChompResult<'lt> {
-        pub value: &'lt str,
+    pub struct ChompResult<'cr> {
+        pub value: &'cr str,
         pub startIndex: uint,
         pub endIndex: uint
     }
