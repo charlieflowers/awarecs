@@ -34,6 +34,18 @@ fn chomp_should_work_correctly_when_hitting_eof() {
 }
 
 #[test]
+fn chomp_should_succeed_at_2_tokens_in_a_row() {
+    let code = "40+2";
+    let mut chomper = lex::chomp::Chomper::new(code);
+
+    let one = chomper.chomp(|c| ! c.is_digit());
+    assert_eq!(one.value, "40");
+
+    let two = chomper.chomp(|c| c != '+');
+    assert_eq!(two.value, "+");
+}
+
+#[test]
 #[should_fail]
 fn chomp_should_return_none_if_youre_already_at_eof_when_you_call_it() {
     let code = "40";

@@ -23,16 +23,16 @@ pub enum TokenTag {
 pub struct Token<'token> {
     pub tag: TokenTag,
     pub value: &'token str,
-    pub startingIndex: uint,
-    pub endingIndex: uint,
+    pub startIndex: uint,
+    pub endIndex: uint,
     pub text: String
 }
 
 impl<'ti> Token<'ti> {
-    pub fn make<'ti>(code: &'ti str, tag: TokenTag, startingIndex: uint, endingIndex: uint) -> Token<'ti> {
-        let slice = code.slice(startingIndex, endingIndex);
-        Token {tag:tag, value: slice, startingIndex: startingIndex,
-               endingIndex: endingIndex, text: ("[".to_string() + tag.to_string() + " " + slice.to_string() + "]").to_string()}
+    pub fn make<'ti>(my_slice: &'ti str, tag: TokenTag, startIndex: uint, endIndex: uint) -> Token<'ti> {
+        // todo get rid of the "text" field because it of course copies the whole source code & you worked so hard to avoid copies
+        Token {tag:tag, value: my_slice, startIndex: startIndex,
+               endIndex: endIndex, text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
     }
 }
 
@@ -53,15 +53,19 @@ impl<'li> Lexer<'li> {
             let next_char_o = self.chomper.peek();
             if next_char_o == None { break; } // todo ugliness
             let next_char = next_char_o.unwrap();
-            println!("char {} is {}.", next_char, *index);
+            // println!("char {} is {}.", next_char, *index);
 
             let token = match next_char {
                 ws if ws.is_whitespace() => self.get_whitespace(),
-                num if num.is_digit() => get_number(self.code, index),
-                '+' | '-' => get_operator(self.code, index),
-                '#' => get_comment(self.code, index),
+                num if num.is_digit() => self.get_number(),
+                '+' | '-' => self.get_operator(),
+                '#' => self.get_comment(),
                 _ => {fail!("unable to match char {} at index {}", next_char, *index)}
             };
+
+            println!("Got token!! {}", token);
+            println!("Chomper peek char is {}", self.chomper.peek());
+            println!("At this point, index is {}", self.chomper.index);
 
             tokens.push(token);
         }
@@ -71,11 +75,37 @@ impl<'li> Lexer<'li> {
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
         let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
+        println!("Here's the whitespace chomp result: {}", result);
         if result.is_empty() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
 
-        Token::make(self.code, Whitespace, result.startIndex, result.endIndex) // todo, make Token use slice we already have
+        Token::make(result.value, Whitespace, result.startIndex, result.endIndex)
     }
 
+    pub fn get_number(&mut self) -> Token<'li> {
+        let result = self.chomper.chomp(|c| {! c.is_digit()} );
+        Token::make(result.value, Number, result.startIndex, result.endIndex)
+    }
+
+    pub fn get_operator(&mut self) -> Token<'li> {
+        let result = self.chomper.chomp(|c| {c != '+' && c != '-'});
+        Token::make(result.value, Operator, result.startIndex, result.endIndex)
+    }
+
+    pub fn get_comment(&mut self) -> Token<'li> {
+        // todo next line can be nicer
+        if self.chomper.peek() != Some('#') { fail!("I thought I was parsing a comment, but it starts with this: {}", self.chomper.peek())}
+        match self.chomper.text().slice_to(1) { // todo can probably pattern match more gracefully here
+            "##" => self.get_here_comment(),
+            _ => {
+                let result = self.chomper.chomp(|c| {c == '\n'});
+                Token::make(result.value, Comment, result.startIndex, result.endIndex)
+            }
+        }
+    }
+
+    pub fn get_here_comment(&mut self) -> Token<'li> {
+        fail!("Todo, transform get_here_comment from old code")
+    }
 }
 
 // fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
@@ -97,46 +127,46 @@ impl<'li> Lexer<'li> {
 //     return Token::make(string_contents, Whitespace, startIndex, *index);
 // }
 
-fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let mut value = "".to_string();
-    let startIndex = *index;
-    loop {
-        let ch = string_contents.char_at(*index);
-        if ch.is_digit() {
-            value = value + std::str::from_char(ch);
-            *index = *index + 1;
-        }
-        if ! ch.is_digit() || *index >= string_contents.len()  { return Token::make(string_contents, Number, startIndex, *index); }
-    }
-}
+// fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+//     let mut value = "".to_string();
+//     let startIndex = *index;
+//     loop {
+//         let ch = string_contents.char_at(*index);
+//         if ch.is_digit() {
+//             value = value + std::str::from_char(ch);
+//             *index = *index + 1;
+//         }
+//         if ! ch.is_digit() || *index >= string_contents.len()  { return Token::make(string_contents, Number, startIndex, *index); }
+//     }
+// }
 
-fn get_operator<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let mut result = "".to_string();
-    let startIndex = *index;
-    loop {
-        let ch = string_contents.char_at(*index);
-        if ch != '+' && ch != '-' { return Token::make(string_contents, Operator, startIndex, *index); }
-        result = result + std::str::from_char(ch);
-        *index = *index + 1;
-        if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}
-    }
-}
+// fn get_operator<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+//     let mut result = "".to_string();
+//     let startIndex = *index;
+//     loop {
+//         let ch = string_contents.char_at(*index);
+//         if ch != '+' && ch != '-' { return Token::make(string_contents, Operator, startIndex, *index); }
+//         result = result + std::str::from_char(ch);
+//         *index = *index + 1;
+//         if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}
+//     }
+// }
 
-fn get_comment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let startIndex = *index;
-    let first_ch = string_contents.char_at(*index);
-    if first_ch != '#' { fail!("I thought I was parsing a comment, but it starts with this: {}", first_ch)}
-    let next_ch = string_contents.char_at(*index + 1);
-    if next_ch == '#' { return get_herecomment(string_contents, index); }
-    let mut result = "".to_string();
-    loop {
-        let ch = string_contents.char_at(*index);
-        result = result + std::str::from_char(ch);
-        *index = *index + 1;
-        if ch == '\n' { return  Token::make(string_contents, Comment, startIndex, *index);}
-        if *index >= string_contents.len() { fail!("Inside get_comment, we ran past end of parser input and were planning to keep going.");}
-    }
-}
+// fn get_comment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+//     let startIndex = *index;
+//     let first_ch = string_contents.char_at(*index);
+//     if first_ch != '#' { fail!("I thought I was parsing a comment, but it starts with this: {}", first_ch)}
+//     let next_ch = string_contents.char_at(*index + 1);
+//     if next_ch == '#' { return get_herecomment(string_contents, index); }
+//     let mut result = "".to_string();
+//     loop {
+//         let ch = string_contents.char_at(*index);
+//         result = result + std::str::from_char(ch);
+//         *index = *index + 1;
+//         if ch == '\n' { return  Token::make(string_contents, Comment, startIndex, *index);}
+//         if *index >= string_contents.len() { fail!("Inside get_comment, we ran past end of parser input and were planning to keep going.");}
+//     }
+// }
 
 fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> String {
     let my_slice = string_contents.slice_from(*index);
@@ -179,6 +209,7 @@ pub mod chomp {
     pub use std::str::{Chars};
     pub use std::iter::{Enumerate};
 
+    #[deriving(Show)]
     pub struct ChompResult<'cr> {
         pub value: &'cr str,
         pub startIndex: uint,
@@ -187,7 +218,7 @@ pub mod chomp {
 
     impl<'cri> ChompResult<'cri> {
         pub fn is_empty(&self) -> bool {
-            self.startIndex == self.endIndex
+            self.value.len() == 0
         }
     }
 
@@ -208,15 +239,19 @@ pub mod chomp {
         }
 
         pub fn peek(&self) -> Option<char> {
-            let target = self.index + 1;
+            let target = self.index;
             if target >= self.code.len() {return None};
             Some(self.code.char_at(target))
         }
 
+        pub fn text(&self) -> &'ci str {
+            self.code.slice_from(self.index)
+        }
         pub fn next(&mut self) -> Option<(uint, char)> {
             self.assert_not_eof();
             let result = self.char_iterator.next();
             if result == None { self.isEof = true; }
+            self.index = self.index + 1;
             return result;
         }
 
@@ -226,16 +261,26 @@ pub mod chomp {
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
 
+            // todo I KNOW this can be simplified and cleaned up
             loop {
-                let should_quit = match self.next() {
+                let should_quit = match self.peek() {
                     None => {
                         endIndex = Some(endIndex.unwrap() + 1);
                         true
                     },
-                    Some((i, ch)) => {
-                        if startIndex == None { startIndex = Some(i);}
-                        endIndex = Some(i);
-                        quit (ch)
+                    Some(ch) => {
+                        if quit(ch) {
+                            endIndex = Some(self.index);
+                            true
+                        } else {
+                            if startIndex == None { startIndex = Some(self.index);}
+                            if self.next() == None {
+                                endIndex = Some(self.index);
+                                true
+                            } else {
+                                false
+                            }
+                        }
                     }
                 };
 
