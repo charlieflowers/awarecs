@@ -277,11 +277,6 @@ pub mod chomp {
                             if startIndex == None { startIndex = Some(self.index);}
                             println!("just about to call self.next");
                             self.next();
-                            // if nr == None {
-                            //     println!("I DID call self.next, and it was None");
-                            //     endIndex = Some(self.index);
-                            //     true
-                            // } else {
                             false
                         }
                     }
