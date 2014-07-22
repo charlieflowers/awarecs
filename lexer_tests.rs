@@ -10,13 +10,13 @@ fn some_test() {
 fn hello_lex() {
     let code = r#"40 + 2
 "#;
-    let lexer = get_lexer();
-    let tokens = lexer.lex(code);
+    let mut lexer = get_lexer(code);
+    let tokens = lexer.lex();
     assertTokensMatch(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
 }
 
 fn dumpTokensToConsole(tokens: Vec<Token> ) {
-    let mut index = 1;
+    let mut index :uint = 1;
     for t in tokens.iter() {
         println!("Token {} is {}", index, t.text);
         index = index + 1;
@@ -27,8 +27,8 @@ fn dumpTokensToConsole(tokens: Vec<Token> ) {
 fn formula_with_no_spaces_should_succeed() {
     let code = r#"40+2
 "#;
-    let lexer = get_lexer();
-    let tokens = lexer.lex(code);
+    let mut lexer = get_lexer(code);
+    let tokens = lexer.lex();
     assertTokensMatch(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
@@ -58,14 +58,14 @@ fn assertTokensMatch_should_fail() {
 #[test]
 fn should_handle_number_against_eof() {
     let code = r#"40+2"#;
-    let lexer = get_lexer();
-    assertTokensMatch(&lexer.lex(code), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+    let mut lexer = get_lexer(code);
+    assertTokensMatch(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
-fn get_lexer() -> Lexer {
-    Lexer::new()
+fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
+    Lexer::new(code)
 }
 
 fn assertTokensMatch(actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {

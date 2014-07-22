@@ -44,20 +44,22 @@ impl<'li> Lexer<'li> {
     // TODO When you refactor lexer to hold on to the string it is lexing, remove all these fn lifetimes and replace with
     //  one single impl lifetime (similar to how you did with Chomper).
 
-    pub fn lex<'fnlex>(&self, code:&'fnlex str) -> Vec<Token<'fnlex>> {
+    pub fn lex(&mut self) -> Vec<Token<'li>> {
         let index : &mut uint = &mut 0;
         let mut tokens : Vec<Token> = vec![];
 
         loop {
-            if *index >= code.len()  { break; }
-            let next_char = code.char_at(*index);
+            if self.chomper.isEof { break; }
+            let next_char_o = self.chomper.peek();
+            if next_char_o == None { break; } // todo ugliness
+            let next_char = next_char_o.unwrap();
             println!("char {} is {}.", next_char, *index);
 
             let token = match next_char {
-                ws if ws.is_whitespace() => get_whitespace(code, index),
-                num if num.is_digit() => get_number(code, index),
-                '+' | '-' => get_operator(code, index),
-                '#' => get_comment(code, index),
+                ws if ws.is_whitespace() => self.get_whitespace(),
+                num if num.is_digit() => get_number(self.code, index),
+                '+' | '-' => get_operator(self.code, index),
+                '#' => get_comment(self.code, index),
                 _ => {fail!("unable to match char {} at index {}", next_char, *index)}
             };
 
@@ -66,26 +68,34 @@ impl<'li> Lexer<'li> {
 
         tokens
     }
-}
 
-fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let startIndex = *index;
-    let mut value = "".to_string();
-    loop {
-        if *index >= string_contents.len() {break};
-        let ch = string_contents.char_at(*index);
-        if ! ch.is_whitespace() {
-            break;
-        } else {
-            value = value + std::str::from_char(ch);
-            *index = *index+1
-        }
+    pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
+        let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
+        if result.is_empty() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
+
+        Token::make(self.code, Whitespace, result.startIndex, result.endIndex) // todo, make Token use slice we already have
     }
 
-    if value.len() == 0  { fail!("You are not supposed to call get_whitespace unless you know you got some. But I found zero characters of whitespace.")}
-
-    return Token::make(string_contents, Whitespace, startIndex, *index);
 }
+
+// fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+//     let startIndex = *index;
+//     let mut value = "".to_string();
+//     loop {
+//         if *index >= string_contents.len() {break};
+//         let ch = string_contents.char_at(*index);
+//         if ! ch.is_whitespace() {
+//             break;
+//         } else {
+//             value = value + std::str::from_char(ch);
+//             *index = *index+1
+//         }
+//     }
+
+//     if value.len() == 0  { fail!("You are not supposed to call get_whitespace unless you know you got some. But I found zero characters of whitespace.")}
+
+//     return Token::make(string_contents, Whitespace, startIndex, *index);
+// }
 
 fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
     let mut value = "".to_string();
@@ -175,11 +185,17 @@ pub mod chomp {
         pub endIndex: uint
     }
 
+    impl<'cri> ChompResult<'cri> {
+        pub fn is_empty(&self) -> bool {
+            self.startIndex == self.endIndex
+        }
+    }
+
     pub struct Chomper<'chomper> {
-        code: &'chomper str,
-        index: uint,
+        pub code: &'chomper str,
+        pub index: uint,
         char_iterator: Enumerate<Chars<'chomper>>,
-        isEof: bool,
+        pub isEof: bool,
     }
 
     impl<'ci> Chomper<'ci> {
@@ -189,6 +205,12 @@ pub mod chomp {
 
         fn assert_not_eof(&self) {
             if self.isEof {fail!("Chomper is at EOF."); }
+        }
+
+        pub fn peek(&self) -> Option<char> {
+            let target = self.index + 1;
+            if target >= self.code.len() {return None};
+            Some(self.code.char_at(target))
         }
 
         pub fn next(&mut self) -> Option<(uint, char)> {
