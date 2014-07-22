@@ -265,7 +265,8 @@ pub mod chomp {
             loop {
                 let should_quit = match self.peek() {
                     None => {
-                        endIndex = Some(endIndex.unwrap() + 1);
+                        // This means, there IS no next character! EOF!
+                        endIndex = Some(self.index);
                         true
                     },
                     Some(ch) => {
@@ -274,17 +275,23 @@ pub mod chomp {
                             true
                         } else {
                             if startIndex == None { startIndex = Some(self.index);}
-                            if self.next() == None {
-                                endIndex = Some(self.index);
-                                true
-                            } else {
-                                false
-                            }
+                            println!("just about to call self.next");
+                            self.next();
+                            // if nr == None {
+                            //     println!("I DID call self.next, and it was None");
+                            //     endIndex = Some(self.index);
+                            //     true
+                            // } else {
+                            false
                         }
                     }
                 };
 
                 if should_quit {
+                    println!("Just about to create ChompResult");
+                    println!("startIndex is: {}", startIndex);
+                    println!("endIndex is: {}", endIndex);
+
                     return ChompResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
                                         startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() };
                 }

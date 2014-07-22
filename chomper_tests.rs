@@ -23,12 +23,14 @@ fn chomp_should_work_correctly_when_not_hitting_eof() {
 #[test]
 fn chomp_should_work_correctly_when_hitting_eof() {
     let code = "40";
-    let mut chomper = box lex::chomp::Chomper::new(code);
+    let mut chomper = lex::chomp::Chomper::new(code);
 
     let result = chomper.chomp(|ch| {
         println!("Seeing if {} is a digit.", ch);
         ! ch.is_digit()
     });
+
+    println!("result is: {}", result);
 
     assert_eq!(result.value, "40");
 }
