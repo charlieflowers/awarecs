@@ -18,14 +18,14 @@ fn dump_tokens_to_console(tokens: Vec<Token> ) {
     }
 }
 
-// #[test]
-// fn formula_with_no_spaces_should_succeed() {
-//     let code = r#"40+2
-// "#;
-//     let mut lexer = get_lexer(code);
-//     let tokens = lexer.lex();
-//     assert_tokens_match(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-// }
+#[test]
+fn formula_with_no_spaces_should_succeed() {
+    let code = r#"40+2
+"#;
+    let mut lexer = get_lexer(code);
+    let tokens = lexer.lex();
+    assert_tokens_match(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+}
 
 #[test]
 fn make_sure_assert_tokens_itself_works() {
@@ -50,12 +50,12 @@ fn make_sure_assert_tokens_fails_when_it_should() {
     assert_tokens_match(&myTokens, vec!["[WrongStuff +]"]);
 }
 
-// #[test]
-// fn should_handle_number_against_eof() {
-//     let code = r#"40+2"#;
-//     let mut lexer = get_lexer(code);
-//     assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-// }
+#[test]
+fn should_handle_number_against_eof() {
+    let code = r#"40+2"#;
+    let mut lexer = get_lexer(code);
+    assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+}
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
