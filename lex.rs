@@ -265,7 +265,7 @@ pub mod chomp {
             loop {
                 let should_quit = match self.peek() {
                     None => {
-                        // This means, there IS no next character! EOF!
+                        // This means, there IS no next character. EOF.
                         endIndex = Some(self.index);
                         true
                     },
