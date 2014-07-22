@@ -171,43 +171,21 @@ pub mod chomp {
         pub endIndex: uint
     }
 
-    pub struct Chomper<'lt> {
-        code: &'lt str,
+    pub struct Chomper<'chomper> {
+        code: &'chomper str,
         index: uint,
-        char_iterator: Enumerate<Chars<'lt>>,
+        char_iterator: Enumerate<Chars<'chomper>>,
         isEof: bool,
     }
 
-    impl<'lt> Chomper<'lt> {
-        pub fn new<'lt>(code: &'lt str) -> Chomper<'lt> {
+    impl<'ci> Chomper<'ci> {
+        pub fn new(code: &'ci str) -> Chomper<'ci> {
             Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), isEof: false}
         }
 
-        fn assert_not_eof<'lt>(&'lt self) {
+        fn assert_not_eof(&self) {
             if self.isEof {fail!("Chomper is at EOF."); }
         }
-
-        // pub fn chomp_tillOne<'lt>(mut self, quit: |char| -> bool) -> ChompResult<'lt> {
-        //     self.assert_not_eof();
-        //     let startIndex = self.index;
-        //     loop {
-        //         if self.index == self.code.len() || quit(self.code[self.index] as char) {
-        //             return ChompResult{ value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
-        //         }
-        //         self.index = self.index + 1;
-        //     }
-        // }
-
-        // pub fn chomp_till<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
-        //     self.assert_not_eof();
-        //     let startIndex = self.index;
-        //     loop {
-        //         if self.index == self.code.len() || quit(self.code[self.index] as char) {
-        //             return ChompResult{ value: self.code.slice(startIndex, self.index), startIndex:startIndex, endIndex: self.index };
-        //         }
-        //         self.index = self.index + 1;
-        //     }
-        // }
 
         pub fn next(&mut self) -> Option<(uint, char)> {
             self.assert_not_eof();
@@ -217,7 +195,7 @@ pub mod chomp {
         }
 
         #[inline]
-        pub fn chomp_till<'lt>(&'lt mut self, quit: |char| -> bool) -> ChompResult<'lt> {
+        pub fn chomp(&mut self, quit: |char| -> bool) -> ChompResult<'ci> {
             self.assert_not_eof();
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
