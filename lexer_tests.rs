@@ -79,7 +79,7 @@ the proper ending delimiter is encountered. ###"#;
 
     let mut lexer = get_lexer(code);
     assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
-      "[Herecomment ### This whole thing right here is a\nherecomment that can span\nmany lines. A # in the middle is no problem. It won't end until the proper ending delimiter is encountered. ###]"]);
+      "[Herecomment ### This whole thing right here is a\nherecomment that can span\nmany lines. A # in the middle is no problem. It won't end until\nthe proper ending delimiter is encountered. ###]"]);
 }
 
 #[test]
