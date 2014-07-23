@@ -10,7 +10,7 @@ fn hello_lex() {
     assert_tokens_match(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
 }
 
-fn dump_tokens_to_console(tokens: Vec<Token> ) {
+fn dump_tokens_to_console(tokens: &Vec<Token> ) {
     let mut index :uint = 1;
     for t in tokens.iter() {
         println!("Token {} is {}", index, t.text);
@@ -24,6 +24,7 @@ fn formula_with_no_spaces_should_succeed() {
 "#;
     let mut lexer = get_lexer(code);
     let tokens = lexer.lex();
+    dump_tokens_to_console(&tokens);
     assert_tokens_match(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
