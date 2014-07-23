@@ -89,9 +89,10 @@ fn chomp_till_str_should_work_when_there_is_a_match() {
     let code = "This is some text";
     let mut chomper = lex::chomp::Chomper::new(code);
     let cr = chomper.chomp_till_str(|str| str.starts_with("some"));
-    assert_eq!(cr.value, "some");
-    assert_eq!(cr.startIndex, 8);
-    assert_eq!(cr.endIndex, 12);
+    println!("the cr is {}", cr);
+    assert_eq!(cr.value, "This is ");
+    assert_eq!(cr.startIndex, 0);
+    assert_eq!(cr.endIndex, 8);
     assert_eq!(chomper.isEof, false);
 }
 
