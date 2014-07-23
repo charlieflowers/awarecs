@@ -109,21 +109,28 @@ impl<'li> Lexer<'li> {
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
         self.chomper.expect("###");
-
-        loop {
-            let cr = self.chomper.chomp(|c| {c == '#'}); // a # might be part of a ### delimiter, or not.
-            if self.chomper.isEof { return Token::make(cr.value, Herecomment, cr.startIndex, cr.endIndex);}
-
-            match self.chomper.text() {
-                "###" => {
-                    println!("END OF HERECOMMENT FOUND, cr is {}", cr);
-                    println!("END OF HERECOMMENT FOUND, next text is {}", self.chomper.text());
-                    self.chomper.expect("###");
-                    return Token::make(self.chomper.code.slice(cr.startIndex - 3, cr.endIndex + 3), Herecomment, cr.startIndex - 3, cr.endIndex + 3);
-                },
-                _ => ()
-            }
+        let cr = self.chomper.chomp_till_str(|str| str.starts_with("###"));
+        let mut endIndex = cr.endIndex;
+        if ! self.chomper.isEof {
+            self.chomper.expect("###");
+            endIndex = cr.endIndex + 3;
         }
+        Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
+
+        // loop {
+        //     let cr = self.chomper.chomp(|c| {c == '#'}); // a # might be part of a ### delimiter, or not.
+        //     if self.chomper.isEof { return Token::make(cr.value, Herecomment, cr.startIndex, cr.endIndex);}
+
+        //     match self.chomper.text() {
+        //         "###" => {
+        //             println!("END OF HERECOMMENT FOUND, cr is {}", cr);
+        //             println!("END OF HERECOMMENT FOUND, next text is {}", self.chomper.text());
+        //             self.chomper.expect("###");
+        //             return Token::make(self.chomper.code.slice(cr.startIndex - 3, cr.endIndex + 3), Herecomment, cr.startIndex - 3, cr.endIndex + 3);
+        //         },
+        //         _ => ()
+        //     }
+        // }
     }
 
         // // Just keep going no matter what, until you hit the end or find ###.

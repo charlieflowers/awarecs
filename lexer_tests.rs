@@ -78,7 +78,8 @@ many lines. A # in the middle is no problem. It won't end until
 the proper ending delimiter is encountered. ###"#;
 
     let mut lexer = get_lexer(code);
-    assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Herecomment]"]);
+    assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
+      "[Herecomment ### This whole thing right here is a\nherecomment that can span\nmany lines. A # in the middle is no problem. It won't end until the proper ending delimiter is encountered. ###]"]);
 }
 
 #[test]
@@ -90,7 +91,7 @@ runs straight to EOF."#;
 
     let mut lexer = get_lexer(code);
     assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
-      "[Herecomment  This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
+      "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
 }
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
