@@ -1,19 +1,15 @@
-// use lex::chomp; // {Token, Number, Operator};
-use std::iter;
-use std::str;
-
-mod lex;
+mod chomp;
 
 #[test]
 fn should_be_able_to_instantiate_chomper() {
     let code = "40 + 2";
-    lex::chomp::Chomper::new(code);
+    chomp::Chomper::new(code);
 }
 
 #[test]
 fn chomp_should_work_correctly_when_not_hitting_eof() {
     let code = "40 + 2";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
 
     let result = chomper.chomp(|ch| { ! ch.is_digit() }).unwrap();
 
@@ -23,7 +19,7 @@ fn chomp_should_work_correctly_when_not_hitting_eof() {
 #[test]
 fn chomp_should_work_correctly_when_hitting_eof() {
     let code = "40";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
 
     let result = chomper.chomp(|ch| {
         println!("Seeing if {} is a digit.", ch);
@@ -38,7 +34,7 @@ fn chomp_should_work_correctly_when_hitting_eof() {
 #[test]
 fn chomp_should_succeed_at_2_tokens_in_a_row() {
     let code = "40+2";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
 
     let one = chomper.chomp(|c| ! c.is_digit()).unwrap();
     assert_eq!(one.value, "40");
@@ -51,7 +47,7 @@ fn chomp_should_succeed_at_2_tokens_in_a_row() {
 #[should_fail]
 fn chomp_should_return_none_if_youre_already_at_eof_when_you_call_it() {
     let code = "40";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
 
     let chomper_borrow = &mut chomper;
 
@@ -64,14 +60,14 @@ fn chomp_should_return_none_if_youre_already_at_eof_when_you_call_it() {
 #[test]
 fn expect_should_work_for_happy_path() {
     let code = "foobar";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     chomper.expect("foobar");
 }
 
 #[test]
 fn expect_multiple_times_in_a_row_happy_path_should_work() {
     let code = "foobar";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     chomper.expect("foo");
     chomper.expect("bar");
 }
@@ -80,14 +76,14 @@ fn expect_multiple_times_in_a_row_happy_path_should_work() {
 #[should_fail]
 fn expect_should_work_for_failure_path() {
     let code = "foobar";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     chomper.expect("fooOOPSbar");
 }
 
 #[test]
 fn chomp_till_str_should_work_when_there_is_a_match() {
     let code = "This is some text";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     let cr = chomper.chomp_till_str(|str| str.starts_with("some")).unwrap();
     println!("the cr is {}", cr);
     assert_eq!(cr.value, "This is ");
@@ -99,7 +95,7 @@ fn chomp_till_str_should_work_when_there_is_a_match() {
 #[test]
 fn chomp_till_str_should_work_when_there_is_no_match() {
     let code = "This is some text";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     let cr = chomper.chomp_till_str(|str| str.starts_with("XXXXXXX")).unwrap();
     println!("the cr is: {}", cr);
     assert_eq!(cr.value, "This is some text");
@@ -111,7 +107,7 @@ fn chomp_till_str_should_work_when_there_is_no_match() {
 #[test]
 fn is_empty_should_be_true_if_you_quit_chomping_immediately() {
     let code = "foobar";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     let cr = chomper.chomp(|c| c == 'f');
     println!("cr is {}", cr);
     assert!(cr.is_none());
@@ -120,7 +116,7 @@ fn is_empty_should_be_true_if_you_quit_chomping_immediately() {
 #[test]
 fn is_empty_should_be_false_if_you_even_one_char_is_chomped() {
     let code = "f";
-    let mut chomper = lex::chomp::Chomper::new(code);
+    let mut chomper = chomp::Chomper::new(code);
     let cr = chomper.chomp(|_| false).unwrap();
     println!("cr is {}", cr);
 }
