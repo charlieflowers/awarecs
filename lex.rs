@@ -94,9 +94,13 @@ impl<'li> Lexer<'li> {
     pub fn get_comment(&mut self) -> Token<'li> {
         // todo next line can be nicer
         if self.chomper.peek() != Some('#') { fail!("I thought I was parsing a comment, but it starts with this: {}", self.chomper.peek())}
-        match self.chomper.text().slice_to(1) { // todo can probably pattern match more gracefully here
-            "##" => self.get_here_comment(),
+        println!("seeing if we have herecomment");
+
+        match self.chomper.text().slice_to(3) { // todo can probably pattern match more gracefully here
+            "###" => self.get_here_comment(),
             _ => {
+                println!("in get_comment, and decided it was NOT a herecomment.");
+                println!("text is: {}", self.chomper.text());
                 let result = self.chomper.chomp(|c| {c == '\n'});
                 Token::make(result.value, Comment, result.startIndex, result.endIndex)
             }
@@ -104,8 +108,38 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
-        fail!("Todo, transform get_here_comment from old code")
+        self.chomper.expect("###");
+
+        loop {
+            let cr = self.chomper.chomp(|c| {c == '#'}); // a # might be part of a ### delimiter, or not.
+            if self.chomper.isEof { return Token::make(cr.value, Herecomment, cr.startIndex, cr.endIndex);}
+
+            match self.chomper.text() {
+                "###" => {
+                    self.chomper.expect("###");
+                    return Token::make(self.chomper.code.slice(cr.startIndex - 3, cr.endIndex + 3), Herecomment, cr.startIndex - 3, cr.endIndex + 3);
+                },
+                _ => ()
+            }
+        }
     }
+
+        // // Just keep going no matter what, until you hit the end or find ###.
+        // loop {
+        //     // println!("in mystery loop, index is {}", *index);
+        //     // println!("the rest of the string is {}", string_contents.slice_from(*index));
+        //     let ch = string_contents.char_at(*index);
+        //     result = result + std::str::from_char(ch);
+        //     if ch == '#' {
+        //         if string_contents.char_at(*index + 1) == '#' && string_contents.char_at(*index + 2) == '#' {
+        //             result = result + expect(string_contents, index, "###");
+        //             // println!("second expect completed, and result is: {}", result);
+        //             return Token::make(string_contents, Herecomment, startIndex, *index);
+        //         }
+        //     }
+        //     *index = *index + 1;
+        //     if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
+        // }
 }
 
 // fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
@@ -184,26 +218,26 @@ fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> Stri
     return result;
 }
 
-fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-    let startIndex = *index;
-    let mut result = expect(string_contents, index, "###");
-    // Just keep going no matter what, until you hit the end or find ###.
-    loop {
-        // println!("in mystery loop, index is {}", *index);
-        // println!("the rest of the string is {}", string_contents.slice_from(*index));
-        let ch = string_contents.char_at(*index);
-        result = result + std::str::from_char(ch);
-        if ch == '#' {
-            if string_contents.char_at(*index + 1) == '#' && string_contents.char_at(*index + 2) == '#' {
-                result = result + expect(string_contents, index, "###");
-                // println!("second expect completed, and result is: {}", result);
-                return  Token::make(string_contents, Herecomment, startIndex, *index);
-            }
-        }
-        *index = *index + 1;
-        if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
-    }
-}
+// fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
+//     let startIndex = *index;
+//     let mut result = expect(string_contents, index, "###");
+//     // Just keep going no matter what, until you hit the end or find ###.
+//     loop {
+//         // println!("in mystery loop, index is {}", *index);
+//         // println!("the rest of the string is {}", string_contents.slice_from(*index));
+//         let ch = string_contents.char_at(*index);
+//         result = result + std::str::from_char(ch);
+//         if ch == '#' {
+//             if string_contents.char_at(*index + 1) == '#' && string_contents.char_at(*index + 2) == '#' {
+//                 result = result + expect(string_contents, index, "###");
+//                 // println!("second expect completed, and result is: {}", result);
+//                 return  Token::make(string_contents, Herecomment, startIndex, *index);
+//             }
+//         }
+//         *index = *index + 1;
+//         if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
+//     }
+// }
 
 pub mod chomp {
     pub use std::str::{Chars};
@@ -253,6 +287,19 @@ pub mod chomp {
             if result == None { self.isEof = true; }
             self.index = self.index + 1;
             return result;
+        }
+
+        pub fn expect(&mut self, expectation: &str) -> ChompResult<'ci> {
+            if ! self.text().starts_with(expectation) {
+                fail!("At index {}, expected {} but got \r\n {}.", self.index, expectation, self.text())
+            }
+
+            let mut chomped = 0;
+
+            self.chomp(|c| {
+                chomped = chomped + 1;
+                chomped > expectation.len()
+            })
         }
 
         #[inline]

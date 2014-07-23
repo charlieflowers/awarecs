@@ -69,6 +69,18 @@ fn should_handle_comments_correctly() {
       "[Whitespace \n]", "[Number 2]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
 }
 
+#[test]
+fn should_handle_herecomments_correctly() {
+    let code = r#"
+40 ### This whole thing right here is a
+herecomment that can span
+many lines. A # in the middle is no problem. It won't end until
+the proper ending delimiter is encountered. ###"#;
+
+    let mut lexer = get_lexer(code);
+    assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Herecomment]"]);
+}
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {

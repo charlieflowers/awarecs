@@ -60,3 +60,26 @@ fn chomp_should_return_none_if_youre_already_at_eof_when_you_call_it() {
 
     chomper_borrow.chomp(|_| { false });
 }
+
+#[test]
+fn expect_should_work_for_happy_path() {
+    let code = "foobar";
+    let mut chomper = lex::chomp::Chomper::new(code);
+    chomper.expect("foobar");
+}
+
+#[test]
+fn expect_multiple_times_in_a_row_happy_path_should_work() {
+    let code = "foobar";
+    let mut chomper = lex::chomp::Chomper::new(code);
+    chomper.expect("foo");
+    chomper.expect("bar");
+}
+
+#[test]
+#[should_fail]
+fn expect_should_work_for_failure_path() {
+    let code = "foobar";
+    let mut chomper = lex::chomp::Chomper::new(code);
+    chomper.expect("fooOOPSbar");
+}
