@@ -50,14 +50,13 @@ impl<'li> Lexer<'li> {
             let next_char_o = self.chomper.peek();
             if next_char_o == None { break; } // todo ugliness
             let next_char = next_char_o.unwrap();
-            // println!("char {} is {}.", next_char, *index);
 
             let token = match next_char {
                 ws if ws.is_whitespace() => self.get_whitespace(),
                 num if num.is_digit() => self.get_number(),
                 '+' | '-' => self.get_operator(),
                 '#' => self.get_comment(),
-                _ => {fail!("unable to match char {} at index {}", next_char, *index)}
+                _ => {fail!("Charlie, you have not implemented ability to match char {} at index {}", next_char, *index)}
             };
 
             println!("Got token!! {}", token);
