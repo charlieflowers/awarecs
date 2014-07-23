@@ -304,8 +304,15 @@ pub mod chomp {
             })
         }
 
-        #[inline]
+        pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> ChompResult<'ci> {
+            self.chomp_internal(|_| false, quit)
+        }
+
         pub fn chomp(&mut self, quit: |char| -> bool) -> ChompResult<'ci> {
+            self.chomp_internal(quit, |_| false)
+        }
+
+        fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> ChompResult<'ci> {
             self.assert_not_eof();
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
@@ -325,7 +332,7 @@ pub mod chomp {
                         true
                     },
                     Some(ch) => {
-                        if quit(ch) {
+                        if (char_quit(ch) || str_quit(self.text())) {
                             endIndex = Some(self.index);
                             true
                         } else {
