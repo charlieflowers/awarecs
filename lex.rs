@@ -116,6 +116,8 @@ impl<'li> Lexer<'li> {
 
             match self.chomper.text() {
                 "###" => {
+                    println!("END OF HERECOMMENT FOUND, cr is {}", cr);
+                    println!("END OF HERECOMMENT FOUND, next text is {}", self.chomper.text());
                     self.chomper.expect("###");
                     return Token::make(self.chomper.code.slice(cr.startIndex - 3, cr.endIndex + 3), Herecomment, cr.startIndex - 3, cr.endIndex + 3);
                 },
@@ -308,12 +310,18 @@ pub mod chomp {
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
 
+            println!("starting a chomp at text: {}", self.text());
+            println!("index is: {}", self.index);
+            println!("isEof is {}", self.isEof);
+            println!("last valid index of code is {}", self.code.len() - 1);
             // todo I KNOW this can be simplified and cleaned up
             loop {
                 let should_quit = match self.peek() {
                     None => {
                         // This means, there IS no next character. EOF.
                         endIndex = Some(self.index);
+                        // Still need to call next(), to fully put chomper into EOF state.
+                        self.next();
                         true
                     },
                     Some(ch) => {
@@ -321,8 +329,11 @@ pub mod chomp {
                             endIndex = Some(self.index);
                             true
                         } else {
-                            if startIndex == None { startIndex = Some(self.index);}
-                            println!("just about to call self.next");
+                            println!("Not time to quit yet!");
+                            if startIndex == None {
+                                println!("setting start index for chomp at {}", self.index);
+                                startIndex = Some(self.index);
+                            }
                             self.next();
                             false
                         }
@@ -334,8 +345,11 @@ pub mod chomp {
                     println!("startIndex is: {}", startIndex);
                     println!("endIndex is: {}", endIndex);
 
-                    return ChompResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
+                    let cr =  ChompResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
                                         startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() };
+
+                    println!("Full chomp result is: {}", cr);
+                    return cr;
                 }
             }
         }

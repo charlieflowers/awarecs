@@ -81,6 +81,17 @@ the proper ending delimiter is encountered. ###"#;
     assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Herecomment]"]);
 }
 
+#[test]
+fn should_handle_herecomments_that_hit_eof() {
+    let code = r#"
+40 ### This whole thing right here is a
+herecomment that
+runs straight to EOF."#;
+
+    let mut lexer = get_lexer(code);
+    assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
+      "[Herecomment  This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
+}
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
