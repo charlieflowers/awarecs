@@ -57,6 +57,18 @@ fn should_handle_number_against_eof() {
     assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 }
 
+#[test]
+fn should_handle_comments_correctly() {
+    let code = r#"40
+# This is a comment
+2 + 40"#;
+
+    let mut lexer = get_lexer(code);
+    assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Whitespace \n]",
+      "[Comment # This is a comment]",
+      "[Whitespace \n]", "[Number 2]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
+}
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
@@ -65,8 +77,8 @@ fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
 
 fn assert_tokens_match(actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
     println!("Matching tokens: ");
-    println!("   Expecting: {}", expectations);
-    println!("   Actual: Len of {}, -> {}", actualTokens.len(), actualTokens);
+    println!("   Expecting (length of {}): {}", expectations.len(), expectations);
+    println!("   Actual (length of {}): {}", actualTokens.len(), actualTokens);
 
     let mut index = 0;
     let mut actualIter = actualTokens.iter();
