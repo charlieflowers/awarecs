@@ -93,6 +93,7 @@ runs straight to EOF."#;
     assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
       "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
 }
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////
 
 fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {

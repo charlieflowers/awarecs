@@ -64,7 +64,7 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
-        let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
+        let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() }).unwrap();
         println!("Here's the whitespace chomp result: {}", result);
         if result.is_empty() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
 
@@ -72,12 +72,12 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
-        let result = self.chomper.chomp(|c| {! c.is_digit()} );
+        let result = self.chomper.chomp(|c| {! c.is_digit()} ).unwrap();
         Token::make(result.value, Number, result.startIndex, result.endIndex)
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {
-        let result = self.chomper.chomp(|c| {c != '+' && c != '-'});
+        let result = self.chomper.chomp(|c| {c != '+' && c != '-'}).unwrap();
         Token::make(result.value, Operator, result.startIndex, result.endIndex)
     }
 
@@ -91,7 +91,7 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
-                let result = self.chomper.chomp(|c| {c == '\n'});
+                let result = self.chomper.chomp(|c| {c == '\n'}).unwrap();
                 Token::make(result.value, Comment, result.startIndex, result.endIndex)
             }
         }
@@ -99,7 +99,7 @@ impl<'li> Lexer<'li> {
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
         self.chomper.expect("###");
-        let cr = self.chomper.chomp_till_str(|str| str.starts_with("###"));
+        let cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
         let mut endIndex = cr.endIndex;
         if ! self.chomper.isEof {
             self.chomper.expect("###");
@@ -169,18 +169,18 @@ pub mod chomp {
             self.chomp(|_| {
                 chomped = chomped + 1;
                 chomped > expectation.len()
-            })
+            }).unwrap()
         }
 
-        pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> ChompResult<'ci> {
+        pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
             self.chomp_internal(|_| false, quit)
         }
 
-        pub fn chomp(&mut self, quit: |char| -> bool) -> ChompResult<'ci> {
+        pub fn chomp(&mut self, quit: |char| -> bool) -> Option<ChompResult<'ci>> {
             self.chomp_internal(quit, |_| false)
         }
 
-        fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> ChompResult<'ci> {
+        fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
             self.assert_not_eof();
             let mut startIndex: Option<uint> = None;
             let mut endIndex: Option<uint> = None;
@@ -220,10 +220,11 @@ pub mod chomp {
                     println!("startIndex is: {}", startIndex);
                     println!("endIndex is: {}", endIndex);
 
-                    let cr =  ChompResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
-                                        startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() };
+                    if startIndex == None {return None;}
+                    let cr = Some(ChompResult { value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
+                                                 startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() });
 
-                    println!("Full chomp result is: {}", cr);
+                        println!("Full chomp result is: {}", cr);
                     return cr;
                 }
             }
