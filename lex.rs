@@ -64,11 +64,11 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
-        let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() }).unwrap();
+        let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
         println!("Here's the whitespace chomp result: {}", result);
-        if result.is_empty() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
+        if result.is_none() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
 
-        Token::make(result.value, Whitespace, result.startIndex, result.endIndex)
+        Token::make(result.unwrap().value, Whitespace, result.unwrap().startIndex, result.unwrap().endIndex) // todo unwrap too much
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
@@ -118,12 +118,6 @@ pub mod chomp {
         pub value: &'cr str,
         pub startIndex: uint,
         pub endIndex: uint
-    }
-
-    impl<'cri> ChompResult<'cri> {
-        pub fn is_empty(&self) -> bool {
-            self.value.len() == 0
-        }
     }
 
     pub struct Chomper<'chomper> {

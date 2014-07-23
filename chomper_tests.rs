@@ -1,4 +1,4 @@
-use lex::{Lexer, Token, Number, Operator};
+// use lex::chomp; // {Token, Number, Operator};
 use std::iter;
 use std::str;
 
@@ -121,6 +121,6 @@ fn is_empty_should_be_true_if_you_quit_chomping_immediately() {
 fn is_empty_should_be_false_if_you_even_one_char_is_chomped() {
     let code = "f";
     let mut chomper = lex::chomp::Chomper::new(code);
-    let cr = chomper.chomp(|c| false).unwrap();
+    let cr = chomper.chomp(|_| false).unwrap();
     println!("cr is {}", cr);
 }
