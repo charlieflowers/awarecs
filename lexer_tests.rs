@@ -29,7 +29,6 @@ fn formula_with_no_spaces_should_succeed() {
 
 #[test]
 fn make_sure_assert_tokens_itself_works() {
-    let code = "40+2";
     let myTokens = vec![
         Token::make("40", Number, 0, 2),
         Token::make("+", Operator, 2, 3),

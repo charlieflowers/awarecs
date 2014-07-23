@@ -1,12 +1,6 @@
 extern crate std; // Don't know why on earth I need this line based on Rust docs, but I do.
 
-use std::iter;
-use std::io;
-use std::str;
-use std::string;
-
 pub struct Lexer<'lexer> {
-    code: &'lexer str,
     chomper: chomp::Chomper<'lexer>,
 }
 
@@ -38,7 +32,7 @@ impl<'ti> Token<'ti> {
 
 impl<'li> Lexer<'li> {
     pub fn new(code: &'li str) -> Lexer<'li> {
-        Lexer {code: code, chomper: chomp::Chomper::new(code)}
+        Lexer {chomper: chomp::Chomper::new(code)}
     }
 
     pub fn lex(&mut self) -> Vec<Token<'li>> {
@@ -115,22 +109,6 @@ impl<'li> Lexer<'li> {
     }
 }
 
-fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> String {
-    let my_slice = string_contents.slice_from(*index);
-    // println!("expecting! At index {}, expecting {} from {}.", *index, expectation, my_slice);
-
-    if ! my_slice.starts_with(expectation) { fail!("At index {}, expected {} but got \r\n {}.", *index, expectation, string_contents.slice_from(*index))}
-
-    let mut result = "".to_string();
-    // todo charlie of course its crazy to append char by char
-    for n in range(0, expectation.len()) {
-        let actual = my_slice.char_at(n);
-        result = result + std::str::from_char(actual);
-        *index = *index + 1;
-    }
-    return result;
-}
-
 pub mod chomp {
     pub use std::str::{Chars};
     pub use std::iter::{Enumerate};
@@ -188,7 +166,7 @@ pub mod chomp {
 
             let mut chomped = 0;
 
-            self.chomp(|c| {
+            self.chomp(|_| {
                 chomped = chomped + 1;
                 chomped > expectation.len()
             })
@@ -222,7 +200,7 @@ pub mod chomp {
                         true
                     },
                     Some(ch) => {
-                        if (char_quit(ch) || str_quit(self.text())) {
+                        if char_quit(ch) || str_quit(self.text()) {
                             endIndex = Some(self.index);
                             true
                         } else {
