@@ -41,9 +41,6 @@ impl<'li> Lexer<'li> {
         Lexer {code: code, chomper: chomp::Chomper::new(code)}
     }
 
-    // TODO When you refactor lexer to hold on to the string it is lexing, remove all these fn lifetimes and replace with
-    //  one single impl lifetime (similar to how you did with Chomper).
-
     pub fn lex(&mut self) -> Vec<Token<'li>> {
         let index : &mut uint = &mut 0;
         let mut tokens : Vec<Token> = vec![];
@@ -116,100 +113,8 @@ impl<'li> Lexer<'li> {
             endIndex = cr.endIndex + 3;
         }
         Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
-
-        // loop {
-        //     let cr = self.chomper.chomp(|c| {c == '#'}); // a # might be part of a ### delimiter, or not.
-        //     if self.chomper.isEof { return Token::make(cr.value, Herecomment, cr.startIndex, cr.endIndex);}
-
-        //     match self.chomper.text() {
-        //         "###" => {
-        //             println!("END OF HERECOMMENT FOUND, cr is {}", cr);
-        //             println!("END OF HERECOMMENT FOUND, next text is {}", self.chomper.text());
-        //             self.chomper.expect("###");
-        //             return Token::make(self.chomper.code.slice(cr.startIndex - 3, cr.endIndex + 3), Herecomment, cr.startIndex - 3, cr.endIndex + 3);
-        //         },
-        //         _ => ()
-        //     }
-        // }
     }
-
-        // // Just keep going no matter what, until you hit the end or find ###.
-        // loop {
-        //     // println!("in mystery loop, index is {}", *index);
-        //     // println!("the rest of the string is {}", string_contents.slice_from(*index));
-        //     let ch = string_contents.char_at(*index);
-        //     result = result + std::str::from_char(ch);
-        //     if ch == '#' {
-        //         if string_contents.char_at(*index + 1) == '#' && string_contents.char_at(*index + 2) == '#' {
-        //             result = result + expect(string_contents, index, "###");
-        //             // println!("second expect completed, and result is: {}", result);
-        //             return Token::make(string_contents, Herecomment, startIndex, *index);
-        //         }
-        //     }
-        //     *index = *index + 1;
-        //     if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
-        // }
 }
-
-// fn get_whitespace<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-//     let startIndex = *index;
-//     let mut value = "".to_string();
-//     loop {
-//         if *index >= string_contents.len() {break};
-//         let ch = string_contents.char_at(*index);
-//         if ! ch.is_whitespace() {
-//             break;
-//         } else {
-//             value = value + std::str::from_char(ch);
-//             *index = *index+1
-//         }
-//     }
-
-//     if value.len() == 0  { fail!("You are not supposed to call get_whitespace unless you know you got some. But I found zero characters of whitespace.")}
-
-//     return Token::make(string_contents, Whitespace, startIndex, *index);
-// }
-
-// fn get_number<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-//     let mut value = "".to_string();
-//     let startIndex = *index;
-//     loop {
-//         let ch = string_contents.char_at(*index);
-//         if ch.is_digit() {
-//             value = value + std::str::from_char(ch);
-//             *index = *index + 1;
-//         }
-//         if ! ch.is_digit() || *index >= string_contents.len()  { return Token::make(string_contents, Number, startIndex, *index); }
-//     }
-// }
-
-// fn get_operator<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-//     let mut result = "".to_string();
-//     let startIndex = *index;
-//     loop {
-//         let ch = string_contents.char_at(*index);
-//         if ch != '+' && ch != '-' { return Token::make(string_contents, Operator, startIndex, *index); }
-//         result = result + std::str::from_char(ch);
-//         *index = *index + 1;
-//         if *index >= string_contents.len() { fail!("Inside get_operator, we ran past end of parser input and were planning to keep going.");}
-//     }
-// }
-
-// fn get_comment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-//     let startIndex = *index;
-//     let first_ch = string_contents.char_at(*index);
-//     if first_ch != '#' { fail!("I thought I was parsing a comment, but it starts with this: {}", first_ch)}
-//     let next_ch = string_contents.char_at(*index + 1);
-//     if next_ch == '#' { return get_herecomment(string_contents, index); }
-//     let mut result = "".to_string();
-//     loop {
-//         let ch = string_contents.char_at(*index);
-//         result = result + std::str::from_char(ch);
-//         *index = *index + 1;
-//         if ch == '\n' { return  Token::make(string_contents, Comment, startIndex, *index);}
-//         if *index >= string_contents.len() { fail!("Inside get_comment, we ran past end of parser input and were planning to keep going.");}
-//     }
-// }
 
 fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> String {
     let my_slice = string_contents.slice_from(*index);
@@ -226,27 +131,6 @@ fn expect(string_contents : &str, index : &mut uint, expectation : &str) -> Stri
     }
     return result;
 }
-
-// fn get_herecomment<'a>(string_contents : &'a str, index : &mut uint) -> Token<'a> {
-//     let startIndex = *index;
-//     let mut result = expect(string_contents, index, "###");
-//     // Just keep going no matter what, until you hit the end or find ###.
-//     loop {
-//         // println!("in mystery loop, index is {}", *index);
-//         // println!("the rest of the string is {}", string_contents.slice_from(*index));
-//         let ch = string_contents.char_at(*index);
-//         result = result + std::str::from_char(ch);
-//         if ch == '#' {
-//             if string_contents.char_at(*index + 1) == '#' && string_contents.char_at(*index + 2) == '#' {
-//                 result = result + expect(string_contents, index, "###");
-//                 // println!("second expect completed, and result is: {}", result);
-//                 return  Token::make(string_contents, Herecomment, startIndex, *index);
-//             }
-//         }
-//         *index = *index + 1;
-//         if *index >= string_contents.len() { fail!("Inside get_herecomment, we ran past end of parser input and were planning to keep going. The herecomment token we have so far is {}", result);}
-//     }
-// }
 
 pub mod chomp {
     pub use std::str::{Chars};
