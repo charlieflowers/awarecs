@@ -1,4 +1,5 @@
 use lex::{Lexer, Token, Number, Operator};
+mod chomp;
 mod lex;
 
 #[test]

@@ -1,11 +1,12 @@
-extern crate std; // Don't know why on earth I need this line based on Rust docs, but I do.
+use chomp::{Chomper};
 
-use chomp::{Chomper, ChompResult};
-
-mod chomp;
+// I think rust's module system needs some simplification. It is crazy that, even though my lex module depends on my chomp module, the lex
+//  module CANNOT say, right here, "import the chomp mod". Rather, whatever the "crate root" is must import both modules.
+//  For example, see lexer_tests.rs, which, at the top, says "mod chomp;" and "mod lex;". The crate root must call "mod" for all
+//  necessary modules, and then the individual modules can get shorter names by "use"-ing them.
 
 pub struct Lexer<'lexer> {
-    chomper: chomp::Chomper<'lexer>,
+    chomper: Chomper<'lexer>,
 }
 
 #[deriving(Show)]
@@ -36,7 +37,7 @@ impl<'ti> Token<'ti> {
 
 impl<'li> Lexer<'li> {
     pub fn new(code: &'li str) -> Lexer<'li> {
-        Lexer {chomper: chomp::Chomper::new(code)}
+        Lexer {chomper: Chomper::new(code)}
     }
 
     pub fn lex(&mut self) -> Vec<Token<'li>> {
@@ -112,3 +113,7 @@ impl<'li> Lexer<'li> {
         Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
     }
 }
+
+// fn main() {
+//     fail!("You ran the main in lex.rs, which is not what you meant to do.");
+// }
