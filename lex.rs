@@ -47,6 +47,15 @@ impl<'ctti> ConvertableToToken<'ctti> for ChompResult<'ctti> {
    }
 }
 
+impl<'ctti> ConvertableToToken<'ctti> for Option<ChompResult<'ctti>> {
+   fn to_token(&self, tag: TokenTag) -> Token<'ctti> {
+       match *self {
+           None => fail!("You are trying to make a {} token from a ChompResult of None!", tag),
+           Some(cr) => cr.to_token(tag)
+       }
+   }
+}
+
 impl<'li> Lexer<'li> {
     pub fn new(code: &'li str) -> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
@@ -83,13 +92,14 @@ impl<'li> Lexer<'li> {
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
         match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
             None => fail!("You called get_whitespace, but no whitespace was found."),
-            Some(cr) => Token::make(cr.value, Whitespace, cr.startIndex, cr.endIndex) // you could print it here if you need to
+            Some(cr) => cr.to_token(Whitespace)
         }
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
         let result = self.chomper.chomp(|c| {! c.is_digit()} ).unwrap();
-        Token::make(result.value, Number, result.startIndex, result.endIndex)
+        // Token::make(result.value, Number, result.startIndex, result.endIndex)
+        result.to_token(Number)
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {
@@ -127,19 +137,32 @@ impl<'li> Lexer<'li> {
             }
         };
 
-        // let mut endIndex = cr.endIndex;
-        // if ! self.chomper.isEof {
-        //     self.chomper.expect("###");
-        //     endIndex = cr.endIndex + 3;
-        // }
         Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use chomp::{Chomper};
+    use chomp::{Chomper, ChompResult};
     use super::{Token, Lexer, Number, Operator, Whitespace, ConvertableToToken};
+
+    #[test]
+    fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
+        let cr = Some(ChompResult {value: "hi", startIndex: 42, endIndex: 44, hitEof: false});
+        let token = cr.to_token(Number);
+        // assert_eq!(token.tag, Number); // todo why does this not compile?
+        assert_eq!(token.value, "hi");
+        assert_eq!(token.startIndex, 42);
+        assert_eq!(token.endIndex, 44);
+        // assert_eq!(token.text, "[ThisIsFake 42]"); // todo why does this not compile?
+    }
+
+    #[test]
+    #[should_fail]
+    fn option_chomp_result_that_is_none_should_fail_to_convert_to_token() {
+        let cr : Option<ChompResult> = None;
+        cr.to_token(Number);
+    }
 
     #[test]
     fn chomp_result_should_be_convertable_to_token() {
