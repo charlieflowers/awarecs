@@ -1,10 +1,10 @@
 use chomp::{Chomper};
 
-mod chomp;
+mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
 // I think rust's module system needs some simplification. It is crazy that, even though my lex module depends on my chomp module, the lex
 //  module CANNOT say, right here, "import the chomp mod". Rather, whatever the "crate root" is must import both modules.
-//  For example, see lexer_tests.rs, which, at the top, says "mod chomp;" and "mod lex;". The crate root must call "mod" for all
+//  For example see the test mod for lex.rs, which, at the top, says "mod chomp;" and "mod lex;". The crate root must call "mod" for all
 //  necessary modules, and then the individual modules can get shorter names by "use"-ing them.
 
 pub struct Lexer<'lexer> {
@@ -115,10 +115,6 @@ impl<'li> Lexer<'li> {
         Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
     }
 }
-
-// fn main() {
-//     fail!("You ran the main in lex.rs, which is not what you meant to do.");
-// }
 
 #[cfg(test)]
 mod test {
