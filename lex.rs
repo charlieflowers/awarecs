@@ -43,28 +43,28 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn lex(&mut self) -> Vec<Token<'li>> {
-        let index : &mut uint = &mut 0;
         let mut tokens : Vec<Token> = vec![];
 
         loop {
             if self.chomper.isEof { break; }
-            let next_char_o = self.chomper.peek();
-            if next_char_o == None { break; } // todo ugliness
-            let next_char = next_char_o.unwrap();
+            match self.chomper.peek() {
+                None => break,
+                Some(c) => {
+                    let token = match c {
+                        ws if ws.is_whitespace() => self.get_whitespace(),
+                        num if num.is_digit() => self.get_number(),
+                        '+' | '-' => self.get_operator(),
+                        '#' => self.get_comment(),
+                        _ => {fail!("Charlie, you have not implemented ability to match char {} at index {}", c, self.chomper.index)}
+                    };
 
-            let token = match next_char {
-                ws if ws.is_whitespace() => self.get_whitespace(),
-                num if num.is_digit() => self.get_number(),
-                '+' | '-' => self.get_operator(),
-                '#' => self.get_comment(),
-                _ => {fail!("Charlie, you have not implemented ability to match char {} at index {}", next_char, *index)}
-            };
+                    println!("Got token!! {}", token);
+                    println!("Chomper peek char is {}", self.chomper.peek());
+                    println!("At this point, index is {}", self.chomper.index);
 
-            println!("Got token!! {}", token);
-            println!("Chomper peek char is {}", self.chomper.peek());
-            println!("At this point, index is {}", self.chomper.index);
-
-            tokens.push(token);
+                    tokens.push(token);
+                }
+            }
         }
 
         tokens
