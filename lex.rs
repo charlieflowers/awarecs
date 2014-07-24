@@ -12,6 +12,7 @@ pub struct Lexer<'lexer> {
 }
 
 #[deriving(Show)]
+#[deriving(PartialEq)]
 pub enum TokenTag {
     Number,
     Whitespace,
@@ -146,11 +147,11 @@ mod test {
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
         let cr = Some(ChompResult {value: "hi", startIndex: 42, endIndex: 44, hitEof: false});
         let token = cr.to_token(Number);
-        // assert_eq!(token.tag, Number); // todo why does this not compile?
+        assert_eq!(token.tag, Number);
         assert_eq!(token.value, "hi");
         assert_eq!(token.startIndex, 42);
         assert_eq!(token.endIndex, 44);
-        // assert_eq!(token.text, "[ThisIsFake 42]"); // todo why does this not compile?
+        assert_eq!(token.text, "[Number hi]".to_string());
     }
 
     #[test]
@@ -167,11 +168,11 @@ mod test {
         let cr = chomper.chomp(|c| c == 'b').unwrap();
         let token = cr.to_token(Whitespace);
         println!("token is {}", token);
-        // assert_eq!(token.tag, Whitespace); // todo why does this not compile?
+        assert_eq!(token.tag, Whitespace);
         assert_eq!(token.value, "foo");
         assert_eq!(token.startIndex, 0);
         assert_eq!(token.endIndex, 3);
-        // assert_eq!(token.text, "[Whitespace foo]"); // todo why does this not compile?
+        assert_eq!(token.text, "[Whitespace foo]".to_string());
     }
 
     #[test]
