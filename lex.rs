@@ -97,9 +97,9 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
-        let result = self.chomper.chomp(|c| {! c.is_digit()} ).unwrap();
-        // Token::make(result.value, Number, result.startIndex, result.endIndex)
-        result.to_token(Number)
+        self.chomper.chomp(|c| ! c.is_digit()).to_token(Number)
+        // let result = self.chomper.chomp(|c| {! c.is_digit()} ).unwrap();
+        // result.to_token(Number)
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {
