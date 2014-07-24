@@ -5,3 +5,4 @@ chomper_tests
 /chomper_tests.expanded
 /chomp
 /lex
+/flycheck_lexer_tests.rs
