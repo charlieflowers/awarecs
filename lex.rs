@@ -1,4 +1,4 @@
-use chomp::{Chomper};
+use chomp::{Chomper, ChompResult};
 
 mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
@@ -35,6 +35,16 @@ impl<'ti> Token<'ti> {
         Token {tag:tag, value: my_slice, startIndex: startIndex,
                endIndex: endIndex, text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
     }
+}
+
+trait ConvertableToToken<'traitLt> {
+    fn to_token(&self, tag: TokenTag) -> Token<'traitLt>;
+}
+
+impl<'ctti> ConvertableToToken<'ctti> for ChompResult<'ctti> {
+   fn to_token(&self, tag: TokenTag) -> Token<'ctti> {
+       Token::make(self.value, tag, self.startIndex, self.endIndex)
+   }
 }
 
 impl<'li> Lexer<'li> {
@@ -75,12 +85,6 @@ impl<'li> Lexer<'li> {
             None => fail!("You called get_whitespace, but no whitespace was found."),
             Some(cr) => Token::make(cr.value, Whitespace, cr.startIndex, cr.endIndex) // you could print it here if you need to
         }
-
-        // let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
-        // println!("Here's the whitespace chomp result: {}", result);
-        // if result.is_none() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
-
-        // Token::make(result.unwrap().value, Whitespace, result.unwrap().startIndex, result.unwrap().endIndex) // todo unwrap too much
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
@@ -110,20 +114,45 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
-        self.chomper.expect("###");
-        let cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
-        let mut endIndex = cr.endIndex;
-        if ! self.chomper.isEof {
-            self.chomper.expect("###");
-            endIndex = cr.endIndex + 3;
-        }
-        Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
+        fail!("not implemented yet!");
+        // let delimiter = self.chomper.expect("###");
+        // if self.chomper.isEof {return delimiter.to_token ()};
+        // let cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
+        // let mut endIndex = cr.endIndex;
+        // if ! self.chomper.isEof {
+        //     self.chomper.expect("###");
+        //     endIndex = cr.endIndex + 3;
+        // }
+        // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use super::{Token, Lexer, Number, Operator};
+    use chomp::{Chomper, ChompResult};
+    use super::{Token, Lexer, Number, Operator, Whitespace, ConvertableToToken};
+
+    #[test]
+    fn chomp_result_should_be_convertable_to_token() {
+        let code = "foobar";
+        let mut chomper = Chomper::new(code);
+        let cr = chomper.chomp(|c| c == 'b').unwrap();
+        let token = cr.to_token(Whitespace);
+        println!("token is {}", token);
+        // assert_eq!(token.tag, Whitespace);
+        assert_eq!(token.value, "foo");
+        assert_eq!(token.startIndex, 0);
+        assert_eq!(token.endIndex, 3);
+        // assert_eq!(token.text, "[Whitespace foo]");
+    }
+
+    #[test]
+    fn lex_should_handle_herecomment_starting_right_at_eof() {
+        let code = "###";
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&tokens, vec!["Herecomment "]);
+    }
 
     #[test]
     fn hello_lex() {
