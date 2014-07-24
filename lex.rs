@@ -71,11 +71,16 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
-        let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
-        println!("Here's the whitespace chomp result: {}", result);
-        if result.is_none() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
+        match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
+            None => fail!("You called get_whitespace, but no whitespace was found."),
+            Some(cr) => Token::make(cr.value, Whitespace, cr.startIndex, cr.endIndex) // you could print it here if you need to
+        }
 
-        Token::make(result.unwrap().value, Whitespace, result.unwrap().startIndex, result.unwrap().endIndex) // todo unwrap too much
+        // let result = self.chomper.chomp(|ch| { ! ch.is_whitespace() });
+        // println!("Here's the whitespace chomp result: {}", result);
+        // if result.is_none() {fail!("You are not supposed to call get_whitespace unless you know you have some. But no whitespace was found.")}
+
+        // Token::make(result.unwrap().value, Whitespace, result.unwrap().startIndex, result.unwrap().endIndex) // todo unwrap too much
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
