@@ -1,4 +1,6 @@
-use chomp::{Chomper, ChompResult};
+use chomp::{Chomper};
+
+mod chomp;
 
 #[test]
 fn should_be_able_to_instantiate_chomper() {

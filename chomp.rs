@@ -113,6 +113,6 @@ impl<'ci> Chomper<'ci> {
     }
 }
 
-fn main() {
-    fail!("You ran the main in chomp.rs, which is not what you meant to do.");
-}
+// fn main() {
+//     fail!("You ran the main in chomp.rs, which is not what you meant to do.");
+// }
