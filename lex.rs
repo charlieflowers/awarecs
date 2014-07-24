@@ -98,13 +98,10 @@ impl<'li> Lexer<'li> {
 
     pub fn get_number(&mut self) -> Token<'li> {
         self.chomper.chomp(|c| ! c.is_digit()).to_token(Number)
-        // let result = self.chomper.chomp(|c| {! c.is_digit()} ).unwrap();
-        // result.to_token(Number)
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {
-        let result = self.chomper.chomp(|c| {c != '+' && c != '-'}).unwrap();
-        Token::make(result.value, Operator, result.startIndex, result.endIndex)
+        self.chomper.chomp(|c| c != '+' && c != '-').to_token(Operator)
     }
 
     pub fn get_comment(&mut self) -> Token<'li> {
@@ -117,8 +114,7 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
-                let result = self.chomper.chomp(|c| {c == '\n'}).unwrap();
-                Token::make(result.value, Comment, result.startIndex, result.endIndex)
+                self.chomper.chomp(|c| c == '\n').to_token(Comment)
             }
         }
     }
