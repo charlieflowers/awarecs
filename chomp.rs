@@ -6,7 +6,7 @@ pub struct ChompResult<'cr> {
     pub value: &'cr str,
     pub startIndex: uint,
     pub endIndex: uint,
-    pub isEof: bool
+    pub hitEof: bool
 }
 
 pub struct Chomper<'chomper> {
@@ -105,7 +105,7 @@ impl<'ci> Chomper<'ci> {
 
                 if startIndex == None {return None;}
                 let cr = Some(ChompResult { value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
-                                            startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap(), isEof: self.isEof });
+                                            startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap(), hitEof: self.isEof });
 
                 println!("Full chomp result is: {}", cr);
                 return cr;

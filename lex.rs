@@ -114,22 +114,31 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
-        fail!("not implemented yet!");
-        // let delimiter = self.chomper.expect("###");
-        // if self.chomper.isEof {return delimiter.to_token ()};
-        // let cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
+        let delimiter = self.chomper.expect("###");
+        if delimiter.hitEof {return delimiter.to_token(Herecomment)};
+        let cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
+
+        let endIndex = match cr {
+            ChompResult { hitEof: true, ..} => cr.endIndex,
+            _ => {
+                // todo I don't like that this appears to be an assignment, but it is actually doing something more
+                self.chomper.expect("###");
+                cr.endIndex + 3
+            }
+        };
+
         // let mut endIndex = cr.endIndex;
         // if ! self.chomper.isEof {
         //     self.chomper.expect("###");
         //     endIndex = cr.endIndex + 3;
         // }
-        // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
+        Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
     }
 }
 
 #[cfg(test)]
 mod test {
-    use chomp::{Chomper, ChompResult};
+    use chomp::{Chomper};
     use super::{Token, Lexer, Number, Operator, Whitespace, ConvertableToToken};
 
     #[test]
@@ -139,11 +148,11 @@ mod test {
         let cr = chomper.chomp(|c| c == 'b').unwrap();
         let token = cr.to_token(Whitespace);
         println!("token is {}", token);
-        // assert_eq!(token.tag, Whitespace);
+        // assert_eq!(token.tag, Whitespace); // todo why does this not compile?
         assert_eq!(token.value, "foo");
         assert_eq!(token.startIndex, 0);
         assert_eq!(token.endIndex, 3);
-        // assert_eq!(token.text, "[Whitespace foo]");
+        // assert_eq!(token.text, "[Whitespace foo]"); // todo why does this not compile?
     }
 
     #[test]
@@ -151,7 +160,7 @@ mod test {
         let code = "###";
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&tokens, vec!["Herecomment "]);
+        assert_tokens_match(&tokens, vec!["[Herecomment ###]"]);
     }
 
     #[test]
