@@ -1,9 +1,9 @@
-mod chomp;
+use chomp::{Chomper, ChompResult};
 
 #[test]
 fn should_be_able_to_instantiate_chomper() {
     let code = "40 + 2";
-    chomp::Chomper::new(code);
+    Chomper::new(code);
 }
 
 #[test]

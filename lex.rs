@@ -1,5 +1,9 @@
 extern crate std; // Don't know why on earth I need this line based on Rust docs, but I do.
 
+use chomp::{Chomper, ChompResult};
+
+mod chomp;
+
 pub struct Lexer<'lexer> {
     chomper: chomp::Chomper<'lexer>,
 }

@@ -1,5 +1,3 @@
-extern crate std; // Don't know why on earth I need this line based on Rust docs, but I do.
-
 pub use std::str::{Chars};
 pub use std::iter::{Enumerate};
 
@@ -113,4 +111,8 @@ impl<'ci> Chomper<'ci> {
             }
         }
     }
+}
+
+fn main() {
+    fail!("You ran the main in chomp.rs, which is not what you meant to do.");
 }
