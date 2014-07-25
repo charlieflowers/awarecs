@@ -4,9 +4,23 @@ pub use std::iter::{Enumerate};
 #[deriving(Show)]
 pub struct ChompResult<'cr> {
     pub value: &'cr str,
-    pub startIndex: uint,
-    pub endIndex: uint,
-    pub hitEof: bool
+    pub hitEof: bool,
+    pub span: Span
+}
+
+#[deriving(Show)]
+#[deriving(PartialEq)]
+pub struct Position {
+    pub index: uint,
+    pub lineNo: uint,
+    pub colNo: uint
+}
+
+#[deriving(Show)]
+#[deriving(PartialEq)]
+pub struct Span {
+    pub startPos: Position,
+    pub endPos: Position
 }
 
 pub struct Chomper<'chomper> {
@@ -14,11 +28,18 @@ pub struct Chomper<'chomper> {
     pub index: uint,
     char_iterator: Enumerate<Chars<'chomper>>,
     pub isEof: bool,
+    pub lineNo: uint,
+    pub colNo: uint,
 }
 
 impl<'ci> Chomper<'ci> {
     pub fn new(code: &'ci str) -> Chomper<'ci> {
-        Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), isEof: false}
+        // don't forget, line numbers start at 1!!!!
+        Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), isEof: false, lineNo: 1, colNo: 0}
+    }
+
+    pub fn position(&self) -> Position {
+        Position { index: self.index, lineNo: self.lineNo, colNo: self.colNo }
     }
 
     fn assert_not_eof(&self) {
@@ -34,11 +55,23 @@ impl<'ci> Chomper<'ci> {
     pub fn text(&self) -> &'ci str {
         self.code.slice_from(self.index)
     }
+
     pub fn next(&mut self) -> Option<(uint, char)> {
         self.assert_not_eof();
         let result = self.char_iterator.next();
-        if result == None { self.isEof = true; }
         self.index = self.index + 1;
+
+        match result {
+            None => {
+                self.isEof = true;
+            },
+            Some((_, '\n')) => {
+                self.lineNo = self.lineNo + 1;
+                self.colNo = 0;
+            },
+            _ => self.colNo = self.colNo + 1
+        };
+
         return result;
     }
 
@@ -65,8 +98,11 @@ impl<'ci> Chomper<'ci> {
 
     fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
         self.assert_not_eof();
-        let mut startIndex: Option<uint> = None;
-        let mut endIndex: Option<uint> = None;
+        // let mut startIndex: Option<uint> = None;
+        // let mut endIndex: Option<uint> = None;
+
+        let mut startPosition: Option<Position> = None;
+        let mut endPosition: Option<Position> = None;
 
         println!("starting a chomp at text: {}", self.text());
         println!("index is: {}", self.index);
@@ -77,20 +113,24 @@ impl<'ci> Chomper<'ci> {
             let should_quit = match self.peek() {
                 None => {
                     // This means, there IS no next character. EOF.
-                    endIndex = Some(self.index);
+                    // endIndex = Some(self.index);
+                    endPosition = Some(self.position());
                     // Still need to call next(), to fully put chomper into EOF state.
                     self.next();
                     true
                 },
                 Some(ch) => {
                     if char_quit(ch) || str_quit(self.text()) {
-                        endIndex = Some(self.index);
+                        // endIndex = Some(self.index);
+                        endPosition = Some(self.position());
                         true
                     } else {
                         println!("Not time to quit yet!");
-                        if startIndex == None {
+                        // if startIndex == None {
+                        if startPosition == None {
                             println!("setting start index for chomp at {}", self.index);
-                            startIndex = Some(self.index);
+                            // startIndex = Some(self.index);
+                            startPosition = Some(self.position());
                         }
                         self.next();
                         false
@@ -100,12 +140,14 @@ impl<'ci> Chomper<'ci> {
 
             if should_quit {
                 println!("Just about to create ChompResult");
-                println!("startIndex is: {}", startIndex);
-                println!("endIndex is: {}", endIndex);
+                println!("startPosition is: {}", startPosition);
+                println!("endPosition is: {}", endPosition);
 
-                if startIndex == None {return None;}
-                let cr = Some(ChompResult { value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
-                                            startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap(), hitEof: self.isEof });
+                if startPosition == None {return None;}
+                let cr = Some(ChompResult { value: self.code.slice(startPosition.unwrap().index, endPosition.unwrap().index),
+                                            // startPosition:startPosition.unwrap(), endPosition: endPosition.unwrap(),
+                                            span: Span { startPos: startPosition.unwrap(), endPos: endPosition.unwrap() },
+                                            hitEof: self.isEof });
 
                 println!("Full chomp result is: {}", cr);
                 return cr;
@@ -117,6 +159,22 @@ impl<'ci> Chomper<'ci> {
 #[cfg(test)]
 mod test{
     use super::{Chomper};
+
+    #[test]
+    fn it_should_track_line_and_col_numbers() {
+        let code = r#"This is
+some text that starts at
+line zero but then crosses many lines. I will
+chomp it until 42, which is the first digit."#;
+
+        let mut chomper = Chomper::new(code);
+        let cr = chomper.chomp(|c| c.is_digit()).unwrap();
+        assert_eq!(cr.span.startPos.lineNo, 1);
+        assert_eq!(cr.span.startPos.colNo, 0);
+
+        assert_eq!(cr.span.endPos.lineNo, 4);
+        assert_eq!(cr.span.endPos.colNo, 15);
+    }
 
     #[test]
     fn should_be_able_to_instantiate_chomper() {
@@ -205,8 +263,8 @@ mod test{
         let cr = chomper.chomp_till_str(|str| str.starts_with("some")).unwrap();
         println!("the cr is {}", cr);
         assert_eq!(cr.value, "This is ");
-        assert_eq!(cr.startIndex, 0);
-        assert_eq!(cr.endIndex, 8);
+        assert_eq!(cr.span.startPos.index, 0);
+        assert_eq!(cr.span.endPos.index, 8);
         assert_eq!(chomper.isEof, false);
     }
 
@@ -217,8 +275,8 @@ mod test{
         let cr = chomper.chomp_till_str(|str| str.starts_with("XXXXXXX")).unwrap();
         println!("the cr is: {}", cr);
         assert_eq!(cr.value, "This is some text");
-        assert_eq!(cr.startIndex, 0);
-        assert_eq!(cr.endIndex, 17);
+        assert_eq!(cr.span.startPos.index, 0);
+        assert_eq!(cr.span.endPos.index, 17);
         assert_eq!(chomper.isEof, true);
     }
 

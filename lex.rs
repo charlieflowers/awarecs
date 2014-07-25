@@ -1,3 +1,4 @@
+#![feature(macro_rules)]
 use chomp::{Chomper, ChompResult};
 
 mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
@@ -294,5 +295,4 @@ runs straight to EOF."#;
             index = index + 1;
         }
     }
-
 }
