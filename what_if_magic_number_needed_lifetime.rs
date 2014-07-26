@@ -17,7 +17,7 @@ trait CanBeAddedToMagicNumber {
     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber;
 }
 
-impl CanBeAddedToMagicNumber for MagicNumber {
+impl<'b> CanBeAddedToMagicNumber for MagicNumber<'b> {
     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber {
         MagicNumber { value: lhs.value + self.value }
     }
@@ -76,3 +76,9 @@ fn main() {
 //     b. Next error is ALSO on line 10, inside the type parameters for Add. It's pretty abstract to think about which lifetime
 //        should go here. What is our return type? Well, really, we are going to return a MagicNumber that lives as long as
 //        our *lhs*. Our lhs is our self param, which is the same type as the thing after "for". So I will use 'a.
+//
+//        YES, that worked. Down to 2 errors, and so far everything makes sense to me.
+//
+//     c. Next error is on line 20, after the "for". I believe this is simply a matter of adding 'b to MagicNumber after "for", which
+//         will give me an undeclared lifetime error for 'b. Then, I'll add 'b right after the impl to declare it, and I'll be
+//         down to only one error. YES: IT PLAYED OUT EXACTLY LIKE THAT!
