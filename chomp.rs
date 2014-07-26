@@ -92,13 +92,6 @@ impl<'ci> Chomper<'ci> {
             fail!("At index {}, expected {} but got \r\n {}.", self.index, expectation, self.text())
         }
 
-        // let mut chomped = 0;
-
-        // self.chomp(|_| {
-        //     chomped = chomped + 1;
-        //     chomped > expectation.len()
-        // }).unwrap()
-
         self.chomp_count(expectation.len()).unwrap()
     }
 
@@ -134,7 +127,6 @@ impl<'ci> Chomper<'ci> {
             let should_quit = match self.peek() {
                 None => {
                     // This means, there IS no next character. EOF.
-                    // endIndex = Some(self.index);
                     endPosition = Some(self.position());
                     // Still need to call next(), to fully put chomper into EOF state.
                     self.next();

@@ -7,3 +7,4 @@ chomper_tests
 /lex
 /flycheck_lexer_tests.rs
 /flycheck_lex.rs
+/flycheck_chomp.rs
