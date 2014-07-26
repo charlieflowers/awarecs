@@ -19,7 +19,8 @@ pub enum TokenTag {
     Whitespace,
     Operator,
     Herecomment,
-    Comment
+    Comment,
+    Identifier,
 }
 
 #[deriving(Show)]
@@ -72,6 +73,7 @@ impl<'li> Lexer<'li> {
                 None => break,
                 Some(c) => {
                     let token = match c {
+                        ch if ch.is_valid_first_char_of_identifier_or_keyword() => self.get_identifier_or_keyword(),
                         ws if ws.is_whitespace() => self.get_whitespace(),
                         num if num.is_digit() => self.get_number(),
                         '+' | '-' => self.get_operator(),
@@ -89,6 +91,42 @@ impl<'li> Lexer<'li> {
         }
 
         tokens
+    }
+
+    pub fn get_identifier_or_keyword(&mut self) -> Token<'li> {
+        if ! self.chomper.peek().is_valid_first_char_of_identifier_or_keyword() {
+            fail!("You called get_identifier_or_keyword, but the next char is not a valid first char for a word. Char is: {}", self.chomper.peek());
+        }
+
+        let first = self.chomper.chomp_count(1);
+        let rest = self.chomper.chomp(|c| is_valid_subsequent_char_of_identifier_or_keyword(c));
+
+        first.combine(rest, self.code).to_token(Identifier)
+    }
+
+    fn is_valid_first_char_of_identifier_or_keyword(char ch) -> bool {
+        match(ch) {
+            '$' | '_' => true,
+            'A'..'Z' => true,
+            'a'..'z' => true,
+            _ => false
+                // todo intentionally only allowing identifiers and words to start with "normal" ascii chars for now. Later, add support
+                //   for higher ascii and unicode (/x7f - /uffff, as the reference coffeescript compiler does)
+        }
+    }
+
+    fn is_valid_subsequent_char_of_identifier_or_keyword(char ch) -> bool {
+        match(ch) {
+            '$' | '_' => true,
+            'a'..'z' => true,
+            'A'..'Z' => true,
+            '0'..'9' => true,
+            _ => false
+        }
+    }
+
+    pub fn get_identifier_or_keyword(&mut self) -> Token<'li> {
+
     }
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later

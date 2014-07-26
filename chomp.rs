@@ -8,6 +8,18 @@ pub struct ChompResult<'cr> {
     pub span: Span
 }
 
+impl<'cri> ChompResult<'cri> {
+    pub fn combine(&mut self, target: ChompResult, code: &'cri str) -> ChompResult<'cri> {
+        if self.span.startPos.index >= target.span.startPos.index {
+            fail!("The second ChompResult does not start immediately after the first one.");
+        }
+
+        ChompResult { span: Span { startPos: self.span.startPos, endPos: target.span.endPos },
+                      hitEof: target.hitEof,
+                      value: code.slice(self.span.startPos.index, target.span.endPos.index) }
+    }
+}
+
 #[deriving(Show)]
 #[deriving(PartialEq)]
 pub struct Position {
@@ -80,12 +92,23 @@ impl<'ci> Chomper<'ci> {
             fail!("At index {}, expected {} but got \r\n {}.", self.index, expectation, self.text())
         }
 
+        // let mut chomped = 0;
+
+        // self.chomp(|_| {
+        //     chomped = chomped + 1;
+        //     chomped > expectation.len()
+        // }).unwrap()
+
+        self.chomp_count(expectation.len()).unwrap()
+    }
+
+    pub fn chomp_count(&mut self, count: uint) -> Option<ChompResult<'ci>> {
         let mut chomped = 0;
 
         self.chomp(|_| {
             chomped = chomped + 1;
-            chomped > expectation.len()
-        }).unwrap()
+            chomped <= count
+        })
     }
 
     pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
@@ -98,8 +121,6 @@ impl<'ci> Chomper<'ci> {
 
     fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
         self.assert_not_eof();
-        // let mut startIndex: Option<uint> = None;
-        // let mut endIndex: Option<uint> = None;
 
         let mut startPosition: Option<Position> = None;
         let mut endPosition: Option<Position> = None;
@@ -121,15 +142,12 @@ impl<'ci> Chomper<'ci> {
                 },
                 Some(ch) => {
                     if char_quit(ch) || str_quit(self.text()) {
-                        // endIndex = Some(self.index);
                         endPosition = Some(self.position());
                         true
                     } else {
                         println!("Not time to quit yet!");
-                        // if startIndex == None {
                         if startPosition == None {
                             println!("setting start index for chomp at {}", self.index);
-                            // startIndex = Some(self.index);
                             startPosition = Some(self.position());
                         }
                         self.next();
@@ -145,7 +163,6 @@ impl<'ci> Chomper<'ci> {
 
                 if startPosition == None {return None;}
                 let cr = Some(ChompResult { value: self.code.slice(startPosition.unwrap().index, endPosition.unwrap().index),
-                                            // startPosition:startPosition.unwrap(), endPosition: endPosition.unwrap(),
                                             span: Span { startPos: startPosition.unwrap(), endPos: endPosition.unwrap() },
                                             hitEof: self.isEof });
 
