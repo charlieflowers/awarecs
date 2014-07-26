@@ -1,5 +1,5 @@
 #![feature(macro_rules)]
-use chomp::{Chomper, ChompResult};
+use chomp::{Chomper, ChompResult, Position, Span};
 
 mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
@@ -27,16 +27,17 @@ pub enum TokenTag {
 pub struct Token<'token> {
     pub tag: TokenTag,
     pub value: &'token str,
-    pub startIndex: uint,
-    pub endIndex: uint,
+    // pub startIndex: uint,
+    // pub endIndex: uint,
+    pub span: Span,
     pub text: String
 }
 
 impl<'ti> Token<'ti> {
-    pub fn make<'ti>(my_slice: &'ti str, tag: TokenTag, startIndex: uint, endIndex: uint) -> Token<'ti> {
+    pub fn make<'ti>(my_slice: &'ti str, tag: TokenTag, span: Span) -> Token<'ti> {
         // todo get rid of the "text" field because it of course copies the whole source code & you worked so hard to avoid copies
-        Token {tag:tag, value: my_slice, startIndex: startIndex,
-               endIndex: endIndex, text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
+        Token {tag:tag, value: my_slice, span: span,
+               text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
     }
 }
 
@@ -46,7 +47,7 @@ trait ConvertableToToken<'traitLt> {
 
 impl<'ctti> ConvertableToToken<'ctti> for ChompResult<'ctti> {
    fn to_token(&self, tag: TokenTag) -> Token<'ctti> {
-       Token::make(self.value, tag, self.startIndex, self.endIndex)
+       Token::make(self.value, tag, self.span)
    }
 }
 
@@ -94,17 +95,17 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_identifier_or_keyword(&mut self) -> Token<'li> {
-        if ! self.chomper.peek().is_valid_first_char_of_identifier_or_keyword() {
+        if ! self.is_valid_first_char_of_identifier_or_keyword(self.chomper.peek()) {
             fail!("You called get_identifier_or_keyword, but the next char is not a valid first char for a word. Char is: {}", self.chomper.peek());
         }
 
-        let first = self.chomper.chomp_count(1);
-        let rest = self.chomper.chomp(|c| is_valid_subsequent_char_of_identifier_or_keyword(c));
+        let first = self.chomper.chomp_count(1).unwrap();
+        let rest = self.chomper.chomp(|c| self.is_valid_subsequent_char_of_identifier_or_keyword(c));
 
-        first.combine(rest, self.code).to_token(Identifier)
+        first.combine(rest, self.chomper.code).to_token(Identifier)
     }
 
-    fn is_valid_first_char_of_identifier_or_keyword(char ch) -> bool {
+    fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
         match(ch) {
             '$' | '_' => true,
             'A'..'Z' => true,
@@ -115,7 +116,7 @@ impl<'li> Lexer<'li> {
         }
     }
 
-    fn is_valid_subsequent_char_of_identifier_or_keyword(char ch) -> bool {
+    fn is_valid_subsequent_char_of_identifier_or_keyword(ch: char) -> bool {
         match(ch) {
             '$' | '_' => true,
             'a'..'z' => true,
@@ -123,10 +124,6 @@ impl<'li> Lexer<'li> {
             '0'..'9' => true,
             _ => false
         }
-    }
-
-    pub fn get_identifier_or_keyword(&mut self) -> Token<'li> {
-
     }
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
@@ -162,34 +159,46 @@ impl<'li> Lexer<'li> {
     pub fn get_here_comment(&mut self) -> Token<'li> {
         let delimiter = self.chomper.expect("###");
         if delimiter.hitEof {return delimiter.to_token(Herecomment)};
-        let cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
+        let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
+        cr = delimiter.combine(cr, self.chomper.code);
 
-        let endIndex = match cr {
-            ChompResult { hitEof: true, ..} => cr.endIndex,
-            _ => {
-                // todo I don't like that this appears to be an assignment, but it is actually doing something more
-                self.chomper.expect("###");
-                cr.endIndex + 3
-            }
-        };
+        if cr.hitEof {
+            cr = cr.combine(self.chomper.expect("###"), self.chomper.code);
+        }
 
-        Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
+        // let endIndex = match cr {
+        //     ChompResult { hitEof: true, ..} => cr.endIndex,
+        //     _ => {
+        //         // todo I don't like that this appears to be an assignment, but it is actually doing something more
+        //         self.chomper.expect("###");
+        //         cr.endIndex + 3
+        //     }
+        // };
+
+        // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
+        cr.to_token(Herecomment);
     }
 }
 
 #[cfg(test)]
 mod test {
-    use chomp::{Chomper, ChompResult};
+    use chomp::{Chomper, ChompResult, Span, Position};
     use super::{Token, Lexer, Number, Operator, Whitespace, ConvertableToToken};
 
     #[test]
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
-        let cr = Some(ChompResult {value: "hi", startIndex: 42, endIndex: 44, hitEof: false});
+        let cr = Some(ChompResult {value: "hi",
+                                   span: Span {
+                                       startPos: Position { index: 42, lineNo: 42, colNo: 42 },
+                                       endPos: Position { index: 44, lineNo: 44, colNo: 44 }
+                                   },
+                                   hitEof: false});
+
         let token = cr.to_token(Number);
         assert_eq!(token.tag, Number);
         assert_eq!(token.value, "hi");
-        assert_eq!(token.startIndex, 42);
-        assert_eq!(token.endIndex, 44);
+        assert_eq!(token.span.startPos.index, 42);
+        assert_eq!(token.span.endPos.index, 44);
         assert_eq!(token.text, "[Number hi]".to_string());
     }
 
@@ -209,8 +218,8 @@ mod test {
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
         assert_eq!(token.value, "foo");
-        assert_eq!(token.startIndex, 0);
-        assert_eq!(token.endIndex, 3);
+        assert_eq!(token.span.startPos.index, 0);
+        assert_eq!(token.span.endPos.index, 3);
         assert_eq!(token.text, "[Whitespace foo]".to_string());
     }
 
