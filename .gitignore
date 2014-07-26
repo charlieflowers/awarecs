@@ -8,3 +8,4 @@ chomper_tests
 /flycheck_lexer_tests.rs
 /flycheck_lex.rs
 /flycheck_chomp.rs
+/trait_experiment

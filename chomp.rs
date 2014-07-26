@@ -27,18 +27,34 @@ pub struct ChompResult<'cr> {
 //   Is the presence of Option enough to drive one to needing "overloading" and to these lengths? It sure seems appropriate in
 //   this case, because without it i'd be doing a ton of monkey coding.
 
-trait ICanBeTheRhsOfAddToChompResult<'ticbroacr> { // I am having my own fun with these lifetime names, so butt out :)
-    fn add_to_chomp_result(&self, lhs: &'ticbroacr ChompResult) -> ChompResult<'ticbroacr>;
+trait ICanBeTheRhsOfAddToChompResult { // I am having my own fun with these lifetime names, so butt out :)
+    fn add_to_chomp_result<'f>(&'f self, lhs: &'f ChompResult) -> ChompResult<'f>;
 }
 
-impl<'zzzz, R: ICanBeTheRhsOfAddToChompResult<'zzzz>> Add<R, ChompResult<'zzzz>> for ChompResult<'zzzz> {
+// trait ICanBeTheRhsOfAddToChompResult<'ticbroacr> { // I am having my own fun with these lifetime names, so butt out :)
+//     fn add_to_chomp_result(&self, lhs: &'ticbroacr ChompResult) -> ChompResult<'ticbroacr>;
+// }
+
+impl<'zzzz, R: ICanBeTheRhsOfAddToChompResult> Add<R, ChompResult<'zzzz>> for ChompResult<'zzzz> {
     fn add(&'zzzz self, rhs: &'zzzz R) -> ChompResult<'zzzz> {
         rhs.add_to_chomp_result(self)
     }
 }
 
+// impl<'iicbroacr> ICanBeTheRhsOfAddToChompResult<'iicbroacr> for ChompResult<'iicbroacr> {
+//     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult<'iicbroacr> {
+//         if(lhs.span.startPos.index != self.span.startPos.index - 1) {
+//             fail!("The second ChompResult does not start immediately after the first one.");
+//         }
+
+//         ChompResult { span: Span { startPos: lhs.span.startPos, endPos: self.span.endPos },
+//                       hitEof: self.hitEof, fullCode: self.fullCode,
+//                       value: self.fullCode.slice(lhs.span.startPos.index, self.span.endPos.index) }
+//     }
+// }
+
 impl<'iicbroacr> ICanBeTheRhsOfAddToChompResult<'iicbroacr> for ChompResult<'iicbroacr> {
-    fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult<'iicbroacr> {
+    fn add_to_chomp_result<'iicbroacr>(&'iicbroacr self, lhs: &'iicbroacr ChompResult) -> ChompResult<'iicbroacr> {
         if(lhs.span.startPos.index != self.span.startPos.index - 1) {
             fail!("The second ChompResult does not start immediately after the first one.");
         }
