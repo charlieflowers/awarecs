@@ -103,11 +103,11 @@ impl<'ci> Chomper<'ci> {
     }
 
     pub fn chomp_count(&mut self, count: uint) -> Option<ChompResult<'ci>> {
-        let mut chomped = 0;
+        let mut chomped = -1;
 
         self.chomp(|_| {
             chomped = chomped + 1;
-            chomped <= count
+            chomped == count
         })
     }
 
