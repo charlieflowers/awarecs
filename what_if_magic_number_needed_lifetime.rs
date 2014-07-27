@@ -7,24 +7,24 @@ pub struct MagicNumber<'m> {
 }
 
 // During this process, don't get confused. THERE MUST BE ONE AND ONLY ONE IMPLEMENTATION OF ADD!
-impl<'a, R: CanBeAddedToMagicNumber>  Add<R, MagicNumber<'a>> for MagicNumber<'a> {
-    fn add(&self, rhs: &R) -> MagicNumber {
+impl<'i, R: CanBeAddedToMagicNumber>  Add<R, MagicNumber<'i>> for MagicNumber<'i> {
+    fn add<'g>(&'g self, rhs: &'g R) -> MagicNumber<'g> {
         rhs.add_to_magic_number(self)
     }
 }
 
 trait CanBeAddedToMagicNumber {
-    fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber;
+    fn add_to_magic_number<'h>(&'h self, lhs: &'h MagicNumber) -> MagicNumber<'h>;
 }
 
-impl<'b> CanBeAddedToMagicNumber for MagicNumber<'b> {
-    fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber {
-        MagicNumber { value: lhs.value + self.value, irrelevant_slice_that_needs_lifetime: "hey" }
+impl<'j> CanBeAddedToMagicNumber for MagicNumber<'j> {
+    fn add_to_magic_number<'k>(&'k self, lhs: &'k MagicNumber) -> MagicNumber<'k> {
+        MagicNumber { value: lhs.value + self.value, irrelevant_slice_that_needs_lifetime: lhs.irrelevant_slice_that_needs_lifetime }
     }
 }
 
-impl<'c> CanBeAddedToMagicNumber for Option<MagicNumber<'c>> {
-    fn add_to_magic_number(&self, lhs: &'c MagicNumber) -> MagicNumber<'c> {
+impl<'m> CanBeAddedToMagicNumber for Option<MagicNumber<'m>> {
+    fn add_to_magic_number<'n>(&'n self, lhs: &'n MagicNumber) -> MagicNumber<'n> {
         if self.is_none() { return *lhs; }
         lhs + self.unwrap()
     }
@@ -189,3 +189,34 @@ fn main() {
 //   I make sure my return value doesn't outlive EITHER ONE of my inputs, that should be accomplished just fine. In other words,
 //   the lifetime of my return value must be tied to the lifetimes of BOTH my inputs. And, if that's what I expect, then SAY so
 //   DIRECTLY on the initial trait to begin with! Then, whomever implements the trait will be forced to comply with it.
+//
+//  Let's go back to the beginning again. In my case, I'm adding 2 magic numbers. They BOTH have the SAME slice (which is the source
+//   code being lexed -- even though this simplified example has nothing to do with source code or lexing). The truth is, that
+//   source code lives longer than EITHER the lhs or the rhs. I COULD get rid of the slice in the lexer. Each ChompResult would
+//   have indexes to start and end of the text, but would not have the actual text they were pointing to. You could easily go
+//   get any slice if/when you need it. But I really like the idea of each ChompResult having its slice. Plus, I WANT to slog through
+//   these hard lifetime questions.
+//
+//  So, the result of adding 2 MagicNumbers -- how long should it live. Truth is, I can get the code from EITHER ONE of them, so
+//   my return value has to be tied to the lifetime of BOTH of them. That IS limiting, because I don't really care about the lifetimes
+//   of the lhs and the rhs. I really care about the lifetime of the "source code". But, let's try to solve it with tying the
+//   lifetime to both of them.
+//
+//  In that case, the **trait itself** would dictate that the fn require the lhs and rhs to have the same lifetime, which would
+//   also be the lifetime of the return value. Let's try that.
+//
+//  OK, after sleeping on this last night, one thing is imminenely clear: with Rust, you're going to want to limit the things that
+//   have references. Like in this case. Both my MagicNumber and my ChompResult would be GREATLY simplified by not carrying around
+//   the slice, and they can TOTALLY live WITHOUT that slice. And that is the right call in Rust (at least in its present state).
+//   And it is probably the right call in C++ or any manual memory managemenet language. I think the borrow checker is exposing
+//   the complexity of carrying around borrowed refs, whereas in C++, the complexity would still be there, but hidden. I'd only
+//   find it months down the road when it bit me in the ass because I tried to use a ChompResult after I'd already cleared out
+//   the underlying code.
+//
+//  If you want a ChompResult to hold onto its slice, then it MUST have a PERMANENT TETHER back to the actual code itself (since
+//   that's what the slice refers to or borrows). And the
+//   lifetime is what expresses that permanent tether. If you can abandon the permanent tether, but go back to the code and create
+//   the slice any time you want, then you get way more flexibility as a result.
+//
+//  So, as a thorough learning exercise, let me continue with this example until I get it all unravelled, and then, abandon it, and
+//   go back and let me ChompResult become FREE!
