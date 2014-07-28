@@ -9,3 +9,4 @@ chomper_tests
 /flycheck_lex.rs
 /flycheck_chomp.rs
 /trait_experiment
+/what_if_magic_number_needed_lifetime

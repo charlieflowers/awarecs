@@ -7,42 +7,71 @@ pub struct MagicNumber<'m> {
 }
 
 // During this process, don't get confused. THERE MUST BE ONE AND ONLY ONE IMPLEMENTATION OF ADD!
-impl<'i, R: CanBeAddedToMagicNumber>  Add<R, MagicNumber<'i>> for MagicNumber<'i> {
-    fn add<'g>(&'g self, rhs: &'g R) -> MagicNumber<'g> {
-        rhs.add_to_magic_number(self)
-    }
-}
+// impl<'i, R: CanBeAddedToMagicNumber>  Add<R, MagicNumber<'i>> for MagicNumber<'i> {
+//     fn add<'g>(&'g self, rhs: &'g R) -> MagicNumber<'g> {
+//         rhs.add_to_magic_number(self)
+//     }
+// }
 
-trait CanBeAddedToMagicNumber {
-    fn add_to_magic_number<'h>(&'h self, lhs: &'h MagicNumber) -> MagicNumber<'h>;
-}
+// trait CanBeAddedToMagicNumber {
+//     fn add_to_magic_number<'h>(&'h self, lhs: &'h MagicNumber) -> MagicNumber<'h>;
+// }
 
-impl<'j> CanBeAddedToMagicNumber for MagicNumber<'j> {
-    fn add_to_magic_number<'k>(&'k self, lhs: &'k MagicNumber) -> MagicNumber<'k> {
-        MagicNumber { value: lhs.value + self.value, irrelevant_slice_that_needs_lifetime: lhs.irrelevant_slice_that_needs_lifetime }
-    }
-}
+// impl<'j> CanBeAddedToMagicNumber for MagicNumber<'j> {
+//     fn add_to_magic_number<'k>(&'k self, lhs: &'k MagicNumber) -> MagicNumber<'k> {
+//         MagicNumber { value: lhs.value + self.value, irrelevant_slice_that_needs_lifetime: lhs.irrelevant_slice_that_needs_lifetime }
+//     }
+// }
 
-impl<'m> CanBeAddedToMagicNumber for Option<MagicNumber<'m>> {
-    fn add_to_magic_number<'n>(&'n self, lhs: &'n MagicNumber) -> MagicNumber<'n> {
-        if self.is_none() { return *lhs; }
-        lhs + self.unwrap()
-    }
-}
+// impl<'m> CanBeAddedToMagicNumber for Option<MagicNumber<'m>> {
+//     fn add_to_magic_number<'n>(&'n self, lhs: &'n MagicNumber) -> MagicNumber<'n> {
+//         if self.is_none() { return *lhs; }
+//         lhs + self.unwrap()
+//     }
+// }
 
 fn main() {
-    let one = MagicNumber { value: 40, irrelevant_slice_that_needs_lifetime: "hey" };
-    let two = MagicNumber { value: 2, irrelevant_slice_that_needs_lifetime: "hey" };
-    let result = one + two;
-    println!("ignore the slice value of {}", result.irrelevant_slice_that_needs_lifetime); // prevents compiler warning
-    println!("result: {}", result);
-    assert_eq!(result.value, 42);
+    // let one = MagicNumber { value: 40, irrelevant_slice_that_needs_lifetime: "hey" };
+    // let two = MagicNumber { value: 2, irrelevant_slice_that_needs_lifetime: "hey" };
+    // let result = one + two;
+    // println!("ignore the slice value of {}", result.irrelevant_slice_that_needs_lifetime); // prevents compiler warning
+    // println!("result: {}", result);
+    // assert_eq!(result.value, 42);
 
-    let three : Option<MagicNumber> = None;
+    // let three : Option<MagicNumber> = None;
 
-    let option_result = result + three;
-    println!("option result: {}", option_result);
-    assert_eq!(option_result.value, 42);
+    // let option_result = result + three;
+    // println!("option result: {}", option_result);
+    // assert_eq!(option_result.value, 42);
+
+    let r = 42.foo_it(2);
+    println!("got {}", r);
+    assert_eq!(84, r.some_number);
+
+    let ddd = 'c'.foo_it(2);
+    println!("got {}", ddd);
+    assert_eq!(22, ddd.some_number);
+}
+
+#[deriving(Show)]
+pub struct Foo {
+    some_number: uint
+}
+
+trait Fooable {
+    fn foo_it(&self, number: uint) -> Foo;
+}
+
+impl Fooable for uint {
+    fn foo_it(&self, number: uint) -> Foo {
+        Foo { some_number: *self * number }
+    }
+}
+
+impl Fooable for char {
+    fn foo_it<'xxx>(&'xxx self, number: uint) -> Foo<'xxx> {
+        Foo { some_number: if *self == 'c' { 22 } else { 100 } }
+    }
 }
 
 // Here's how the trnsformation unfolded step by step:
@@ -205,7 +234,7 @@ fn main() {
 //  In that case, the **trait itself** would dictate that the fn require the lhs and rhs to have the same lifetime, which would
 //   also be the lifetime of the return value. Let's try that.
 //
-//  OK, after sleeping on this last night, one thing is imminenely clear: with Rust, you're going to want to limit the things that
+//  OK, after sleeping on this last night, one thing is imminently clear: with Rust, you're going to want to limit the things that
 //   have references. Like in this case. Both my MagicNumber and my ChompResult would be GREATLY simplified by not carrying around
 //   the slice, and they can TOTALLY live WITHOUT that slice. And that is the right call in Rust (at least in its present state).
 //   And it is probably the right call in C++ or any manual memory managemenet language. I think the borrow checker is exposing
@@ -216,7 +245,15 @@ fn main() {
 //  If you want a ChompResult to hold onto its slice, then it MUST have a PERMANENT TETHER back to the actual code itself (since
 //   that's what the slice refers to or borrows). And the
 //   lifetime is what expresses that permanent tether. If you can abandon the permanent tether, but go back to the code and create
-//   the slice any time you want, then you get way more flexibility as a result.
+//   the slice any time you want, then you get way more flexibility as a result. I guess, a borrowed reference IS a permanent
+//   tether, but languages without a borrow checker make that tether invisible.
 //
 //  So, as a thorough learning exercise, let me continue with this example until I get it all unravelled, and then, abandon it, and
 //   go back and let me ChompResult become FREE!
+//
+//  So, the key question at this point is, if there's a Trait called "foo" with one function called "bar" that takes an int and returns
+//   a bool, and you want to provide an impl of that trait ... can you do it with a function called "bar" that has LIFETIME PARAMS?
+//   Or does the lifetime param modify your signature in such a way that you no longer qualify as implementing the trait? I suspect
+//   it makes your sig no longer qualify. (Actually, to be more precise, it is not merely the presence of lifetime params. Those
+//   are always there, even if you don't specify them. But tying the return value lifetime to a fn param lifetime probably would
+//   disqualify your sig as a match for the trait). So I'm going to try this out above.
