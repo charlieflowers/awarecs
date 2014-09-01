@@ -44,6 +44,13 @@ impl<'li> Lexer<'li> {
         Token::make(self.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
     }
 
+    fn make_token_opt(&self, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'li> {
+        match *ocr {
+            None => fail!("You tried to make a {} token, but you're at EOF.", tag),
+            Some(ref cr) => self.make_token(cr, tag)
+        }
+    }
+
     pub fn new(code: &'li str) -> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
     }
@@ -118,18 +125,19 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
-        match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
-            None => fail!("You called get_whitespace, but no whitespace was found."),
-            Some(ref cr) => self.make_token(cr, Whitespace)
-        }
+        // match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
+        //     None => fail!("You called get_whitespace, but no whitespace was found."),
+        //     Some(ref cr) => self.make_token(cr, Whitespace)
+        // }
+        self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
-        self.make_token(&self.chomper.chomp(|c| ! c.is_digit()), Number)
+        self.make_token_opt(&self.chomper.chomp(|c| ! c.is_digit()), Number)
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {
-        self.make_token(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
+        self.make_token_opt(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
     }
 
     pub fn get_comment(&mut self) -> Token<'li> {
