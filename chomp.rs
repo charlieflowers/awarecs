@@ -81,7 +81,7 @@ impl ICanBeTheRhsOfAddToChompResult for ChompResult {
 
 impl ICanBeTheRhsOfAddToChompResult for Option<ChompResult> {
     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult {
-        match(*self) {
+        match *self  {
             None => *lhs,
             Some(cr) => lhs + cr
         }
@@ -422,7 +422,7 @@ chomp it until 42, which is the first digit."#;
     }
 
     #[test]
-    fn adding_Some_to_chomp_result_should_work_in_happy_path() {
+    fn adding_some_to_chomp_result_should_work_in_happy_path() {
         let code = "foobar";
         let mut chomper = Chomper::new(code);
         let one = chomper.expect("foo");
@@ -436,7 +436,7 @@ chomp it until 42, which is the first digit."#;
     }
 
     #[test]
-    fn adding_None_to_chomp_result_should_work_in_happy_path() {
+    fn adding_none_to_chomp_result_should_work_in_happy_path() {
         let code = "foobar";
         let mut chomper = Chomper::new(code);
         let one = chomper.expect("foobar");
