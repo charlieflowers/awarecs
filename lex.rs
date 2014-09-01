@@ -117,11 +117,11 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
-        self.chomper.chomp(|c| ! c.is_digit()).to_token(Number)
+        self.make_token(&self.chomper.chomp(|c| ! c.is_digit()), Number)
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {
-        self.chomper.chomp(|c| c != '+' && c != '-').to_token(Operator)
+        self.make_token(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
     }
 
     pub fn get_comment(&mut self) -> Token<'li> {
@@ -134,19 +134,19 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
-                self.chomper.chomp(|c| c == '\n').to_token(Comment)
+                self.make_token(&self.chomper.chomp(|c| c == '\n'), Comment)
             }
         }
     }
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
         let delimiter = self.chomper.expect("###");
-        if delimiter.hitEof {return delimiter.to_token(Herecomment)};
+        if delimiter.hitEof {return self.make_token(&delimiter, Herecomment)};
         let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
-        cr = delimiter.combine(cr, self.chomper.code);
+        cr = delimiter + cr;
 
         if cr.hitEof {
-            cr = cr.combine(self.chomper.expect("###"), self.chomper.code);
+            cr = cr + self.chomper.expect("###");
         }
 
         // let endIndex = match cr {
@@ -159,7 +159,7 @@ impl<'li> Lexer<'li> {
         // };
 
         // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
-        cr.to_token(Herecomment);
+        self.make_token(&cr, Herecomment);
     }
 }
 
@@ -170,14 +170,14 @@ mod test {
 
     #[test]
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
-        let cr = Some(ChompResult {value: "hi",
+        let cr = Some(ChompResult {
                                    span: Span {
                                        startPos: Position { index: 42, lineNo: 42, colNo: 42 },
                                        endPos: Position { index: 44, lineNo: 44, colNo: 44 }
                                    },
                                    hitEof: false});
 
-        let token = cr.to_token(Number);
+        let token = Token::make("hi".as_slice(), Number, cr.unwrap().span);
         assert_eq!(token.tag, Number);
         assert_eq!(token.value, "hi");
         assert_eq!(token.span.startPos.index, 42);
@@ -186,18 +186,12 @@ mod test {
     }
 
     #[test]
-    #[should_fail]
-    fn option_chomp_result_that_is_none_should_fail_to_convert_to_token() {
-        let cr : Option<ChompResult> = None;
-        cr.to_token(Number);
-    }
-
-    #[test]
-    fn chomp_result_should_be_convertable_to_token() {
+    fn lex_should_be_able_to_make_a_token_from_a_chomp_result() {
         let code = "foobar";
+        let mut lexer = get_lexer(code);
         let mut chomper = Chomper::new(code);
         let cr = chomper.chomp(|c| c == 'b').unwrap();
-        let token = cr.to_token(Whitespace);
+        let token = lexer.make_token(&cr, Whitespace); // todo charlie, thinkabout why you wanted 1st parameter to be a reference
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
         assert_eq!(token.value, "foo");
