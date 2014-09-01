@@ -32,25 +32,32 @@ pub struct Token<'token> {
 }
 
 impl<'ti> Token<'ti> {
-    pub fn make<'ti>(my_slice: &'ti str, tag: TokenTag, span: Span) -> Token<'ti> {
+    pub fn make<'ti>(full_code: &'ti str, tag: TokenTag, span: Span) -> Token<'ti> {
         // todo get rid of the "text" field because it of course copies the whole source code & you worked so hard to avoid copies
+        let my_slice = span.extract(full_code);
+
         Token {tag:tag, value: my_slice, span: span,
                text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
+    }
+
+    pub fn make_helper<'a>(chomper: &'a Chomper, tag: TokenTag, charPredicate: |char| -> bool ) -> Token<'a> {
+        Token::make(chomper.code, tag, chomper.chomp(charPredicate).expect("You were expecting to see {}, but got None.", tag).span)
     }
 }
 
 impl<'li> Lexer<'li> {
 
-    fn s_make_token<'lim>(lexer: &'lim Lexer, cr: &ChompResult, tag: TokenTag) -> Token<'lim> {
-        Token::make(lexer.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
-    }
+    // Even these "static" methods don't work out. The lexer passed in needs a lifetime. And that lifetime somehow confuses the lifetime of the returned token!
+    // fn s_make_token<'lim>(lexer: &'lim Lexer, cr: &ChompResult, tag: TokenTag) -> Token<'lim> {
+    //     Token::make(lexer.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
+    // }
 
-    fn s_make_token_opt<'limo>(lexer: &'limo Lexer, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'limo> {
-        match *ocr {
-            None => fail!("You tried to make a {} token, but you're at EOF.", tag),
-            Some(ref cr) => Lexer::s_make_token(lexer, cr, tag)
-        }
-    }
+    // fn s_make_token_opt<'limo>(lexer: &'limo Lexer, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'limo> {
+    //     match *ocr {
+    //         None => fail!("You tried to make a {} token, but you're at EOF.", tag),
+    //         Some(ref cr) => Lexer::s_make_token(lexer, cr, tag)
+    //     }
+    // }
 
     // make_token and make_token_opt as impl methods on Lexer don't work out because of the overly strict borrow checker (issue # 6268)
     // fn make_token(&self, cr: &ChompResult, tag: TokenTag) -> Token<'li> {
@@ -112,8 +119,9 @@ impl<'li> Lexer<'li> {
 
         let first = self.chomper.chomp_count(1).unwrap();
         let rest = self.chomper.chomp(|c| Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c));
+        let span = (first + rest).span;
 
-        Lexer::s_make_token(self, &(first + rest), Identifier)
+        Token::make(self.chomper.code, Identifier, span)
     }
 
     fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
@@ -142,11 +150,16 @@ impl<'li> Lexer<'li> {
         //     None => fail!("You called get_whitespace, but no whitespace was found."),
         //     Some(ref cr) => self.make_token(cr, Whitespace)
         // }
-        self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
+
+        // self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
+        let imagine = Token::make_helper(self.chomper, Whitespace, |ch| ch.is_whitespace());
+        Token::make(self.chomper.code, Whitespace, self.chomper.chomp(|ch| ! ch.is_whitespace()).expect("You were expecting Whitespace, but got None.").span)
     }
 
     pub fn get_number(&mut self) -> Token<'li> {
-        self.make_token_opt(&self.chomper.chomp(|c| ! c.is_digit()), Number)
+        // self.make_token_opt(&self.chomper.chomp(|c| ! c.is_digit()), Number)
+        Token::make(&self.chomper.code, Number, )
+
     }
 
     pub fn get_operator(&mut self) -> Token<'li> {

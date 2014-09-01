@@ -57,6 +57,12 @@ pub struct Span {
     pub endPos: Position
 }
 
+impl Span {
+    pub fn extract<'a>(&self, source: &'a str) -> &'a str {
+        source.slice(self.startPos.index, self.endPos.index)
+    }
+}
+
 pub struct Chomper<'chomper> {
     pub code: &'chomper str,
     pub index: uint,
