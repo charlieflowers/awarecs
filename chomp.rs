@@ -2,9 +2,7 @@ pub use std::str::{Chars};
 pub use std::iter::{Enumerate};
 
 #[deriving(Show)]
-pub struct ChompResult<'cr> {
-    pub fullCode: &'cr str,
-    pub value: &'cr str,
+pub struct ChompResult {
     pub hitEof: bool,
     pub span: Span
 }
@@ -162,7 +160,7 @@ impl<'ci> Chomper<'ci> {
         return result;
     }
 
-    pub fn expect(&mut self, expectation: &str) -> ChompResult<'ci> {
+    pub fn expect(&mut self, expectation: &str) -> ChompResult {
         if ! self.text().starts_with(expectation) {
             fail!("At index {}, expected {} but got \r\n {}.", self.index, expectation, self.text())
         }
@@ -170,7 +168,7 @@ impl<'ci> Chomper<'ci> {
         self.chomp_count(expectation.len()).unwrap()
     }
 
-    pub fn chomp_count(&mut self, count: uint) -> Option<ChompResult<'ci>> {
+    pub fn chomp_count(&mut self, count: uint) -> Option<ChompResult> {
         let mut chomped = -1;
 
         self.chomp(|_| {
@@ -179,15 +177,15 @@ impl<'ci> Chomper<'ci> {
         })
     }
 
-    pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
+    pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> Option<ChompResult> {
         self.chomp_internal(|_| false, quit)
     }
 
-    pub fn chomp(&mut self, quit: |char| -> bool) -> Option<ChompResult<'ci>> {
+    pub fn chomp(&mut self, quit: |char| -> bool) -> Option<ChompResult> {
         self.chomp_internal(quit, |_| false)
     }
 
-    fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult<'ci>> {
+    fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult> {
         self.assert_not_eof();
 
         let mut startPosition: Option<Position> = None;
@@ -229,14 +227,17 @@ impl<'ci> Chomper<'ci> {
                 println!("endPosition is: {}", endPosition);
 
                 if startPosition == None {return None;}
-                let cr = Some(ChompResult { value: self.code.slice(startPosition.unwrap().index, endPosition.unwrap().index),
-                                            span: Span { startPos: startPosition.unwrap(), endPos: endPosition.unwrap() },
-                                            hitEof: self.isEof, fullCode: self.code });
+                let cr = Some(ChompResult { span: Span { startPos: startPosition.unwrap(), endPos: endPosition.unwrap() },
+                                            hitEof: self.isEof });
 
                 println!("Full chomp result is: {}", cr);
                 return cr;
             }
         }
+    }
+
+    pub fn value(&mut self, chompResult: ChompResult) -> &'ci str {
+        &self.code.slice(chompResult.startPosition.unwrap().index, chompResult.endPosition.unwrap().index)
     }
 }
 
