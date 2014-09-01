@@ -41,7 +41,7 @@ impl<'ti> Token<'ti> {
 
 impl<'li> Lexer<'li> {
     fn make_token(&self, cr: &ChompResult, tag: TokenTag) -> Token<'li> {
-        Token::make(self.chomper.code.slice(*cr.span.startPos, cr.span.endPos), tag, cr.span)
+        Token::make(self.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
     }
 
     pub fn new(code: &'li str) -> Lexer<'li> {
@@ -57,7 +57,7 @@ impl<'li> Lexer<'li> {
                 None => break,
                 Some(c) => {
                     let token = match c {
-                        ch if ch.is_valid_first_char_of_identifier_or_keyword() => self.get_identifier_or_keyword(),
+                        ch if Lexer::is_valid_first_char_of_identifier_or_keyword(ch) => self.get_identifier_or_keyword(),
                         ws if ws.is_whitespace() => self.get_whitespace(),
                         num if num.is_digit() => self.get_number(),
                         '+' | '-' => self.get_operator(),
@@ -78,14 +78,22 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_identifier_or_keyword(&mut self) -> Token<'li> {
-        if ! self.is_valid_first_char_of_identifier_or_keyword(self.chomper.peek()) {
-            fail!("You called get_identifier_or_keyword, but the next char is not a valid first char for a word. Char is: {}", self.chomper.peek());
+        fn fail(msg : String) {
+            fail!("You called get_identifier_or_keyword, but the next char {}", msg);
         }
+        match self.chomper.peek() {
+            None => fail(String::from_str("is the end of file.")),
+            Some(ch) => {
+                if ! Lexer::is_valid_first_char_of_identifier_or_keyword(ch) {
+                    fail(format!("is not a valid first char for a word. Char is {}", ch));
+                }
+            }
+        };
 
         let first = self.chomper.chomp_count(1).unwrap();
-        let rest = self.chomper.chomp(|c| self.is_valid_subsequent_char_of_identifier_or_keyword(c));
+        let rest = self.chomper.chomp(|c| Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c));
 
-        self.make_token(first + rest, Identifier)
+        self.make_token(&(first + rest), Identifier)
     }
 
     fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
