@@ -27,8 +27,6 @@ pub enum TokenTag {
 pub struct Token<'token> {
     pub tag: TokenTag,
     pub value: &'token str,
-    // pub startIndex: uint,
-    // pub endIndex: uint,
     pub span: Span,
     pub text: String
 }
@@ -41,26 +39,11 @@ impl<'ti> Token<'ti> {
     }
 }
 
-trait ConvertableToToken<'traitLt> {
-    fn to_token(&self, tag: TokenTag) -> Token<'traitLt>;
-}
-
-impl<'ctti> ConvertableToToken<'ctti> for ChompResult<'ctti> {
-   fn to_token(&self, tag: TokenTag) -> Token<'ctti> {
-       Token::make(self.value, tag, self.span)
-   }
-}
-
-impl<'ctti> ConvertableToToken<'ctti> for Option<ChompResult<'ctti>> {
-   fn to_token(&self, tag: TokenTag) -> Token<'ctti> {
-       match *self {
-           None => fail!("You are trying to make a {} token from a ChompResult of None!", tag),
-           Some(cr) => cr.to_token(tag)
-       }
-   }
-}
-
 impl<'li> Lexer<'li> {
+    fn make_token(&self, cr: &ChompResult, tag: &TokenTag) -> Token<'li> {
+        Token::make(self.chomper.code.slice(cr.span.startPos, cr.span.endPos), tag, cr.span)
+    }
+
     pub fn new(code: &'li str) -> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
     }
@@ -102,7 +85,7 @@ impl<'li> Lexer<'li> {
         let first = self.chomper.chomp_count(1).unwrap();
         let rest = self.chomper.chomp(|c| self.is_valid_subsequent_char_of_identifier_or_keyword(c));
 
-        first.combine(rest, self.chomper.code).to_token(Identifier)
+        self.make_token(first + rest, Identifier)
     }
 
     fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
@@ -183,7 +166,7 @@ impl<'li> Lexer<'li> {
 #[cfg(test)]
 mod test {
     use chomp::{Chomper, ChompResult, Span, Position};
-    use super::{Token, Lexer, Number, Operator, Whitespace, ConvertableToToken};
+    use super::{Token, Lexer, Number, Operator, Whitespace, TokenTag};
 
     #[test]
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
@@ -258,6 +241,13 @@ mod test {
         }
     }
 
+    fn make_unpositioned_token<'lt>(text: &'lt str, tag: TokenTag) -> Token<'lt> {
+        Token::make(text, tag, Span {
+            startPos: {Position { index: 0, lineNo: 0, colNo: 0}},
+            endPos: {Position { index: 0, lineNo: 0, colNo: 0}}
+        })
+    }
+
     #[test]
     fn formula_with_no_spaces_should_succeed() {
         let code = r#"40+2
@@ -271,9 +261,9 @@ mod test {
     #[test]
     fn make_sure_assert_tokens_itself_works() {
         let myTokens = vec![
-            Token::make("40", Number, 0, 2),
-            Token::make("+", Operator, 2, 3),
-            Token::make("2", Number, 3, 4)];
+            make_unpositioned_token("40", Number),
+            make_unpositioned_token("+", Operator),
+            make_unpositioned_token("2", Number)];
 
         assert_tokens_match(&myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
     }
@@ -283,9 +273,9 @@ mod test {
     fn make_sure_assert_tokens_fails_when_it_should() {
         let code = "40+2";
         let myTokens = vec![
-            Token::make(code, Number, 0, 2),
-            Token::make(code, Operator, 2, 3),
-            Token::make(code, Number, 3, 4)];
+            make_unpositioned_token(code, Number),
+            make_unpositioned_token(code, Operator),
+            make_unpositioned_token(code, Number)];
 
         assert_tokens_match(&myTokens, vec!["[WrongStuff +]"]);
     }
