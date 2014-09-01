@@ -40,16 +40,29 @@ impl<'ti> Token<'ti> {
 }
 
 impl<'li> Lexer<'li> {
-    fn make_token(&self, cr: &ChompResult, tag: TokenTag) -> Token<'li> {
-        Token::make(self.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
+
+    fn s_make_token<'lim>(lexer: &'lim Lexer, cr: &ChompResult, tag: TokenTag) -> Token<'lim> {
+        Token::make(lexer.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
     }
 
-    fn make_token_opt(&self, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'li> {
+    fn s_make_token_opt<'limo>(lexer: &'limo Lexer, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'limo> {
         match *ocr {
             None => fail!("You tried to make a {} token, but you're at EOF.", tag),
-            Some(ref cr) => self.make_token(cr, tag)
+            Some(ref cr) => Lexer::s_make_token(lexer, cr, tag)
         }
     }
+
+    // make_token and make_token_opt as impl methods on Lexer don't work out because of the overly strict borrow checker (issue # 6268)
+    // fn make_token(&self, cr: &ChompResult, tag: TokenTag) -> Token<'li> {
+    //     Token::make(self.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
+    // }
+
+    // fn make_token_opt(&self, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'li> {
+    //     match *ocr {
+    //         None => fail!("You tried to make a {} token, but you're at EOF.", tag),
+    //         Some(ref cr) => self.make_token(cr, tag)
+    //     }
+    // }
 
     pub fn new(code: &'li str) -> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
@@ -100,7 +113,7 @@ impl<'li> Lexer<'li> {
         let first = self.chomper.chomp_count(1).unwrap();
         let rest = self.chomper.chomp(|c| Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c));
 
-        self.make_token(&(first + rest), Identifier)
+        Lexer::s_make_token(self, &(first + rest), Identifier)
     }
 
     fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
