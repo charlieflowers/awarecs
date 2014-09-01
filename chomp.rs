@@ -261,8 +261,8 @@ impl<'ci> Chomper<'ci> {
         }
     }
 
-    pub fn value(&mut self, chompResult: ChompResult) -> &'ci str {
-        &self.code.slice(chompResult.startPosition.unwrap().index, chompResult.endPosition.unwrap().index)
+    pub fn value(&self, chompResult: ChompResult) -> &'ci str {
+        self.code.slice(chompResult.span.startPos.index, chompResult.span.endPos.index)
     }
 }
 
@@ -299,7 +299,7 @@ chomp it until 42, which is the first digit."#;
 
         let result = chomper.chomp(|ch| { ! ch.is_digit() }).unwrap();
 
-        assert_eq!(result.value, "40");
+        assert_eq!(chomper.value(result), "40");
     }
 
     #[test]
@@ -314,7 +314,7 @@ chomp it until 42, which is the first digit."#;
 
         println!("result is: {}", result);
 
-        assert_eq!(result.value, "40");
+        assert_eq!(chomper.value(result), "40");
     }
 
     #[test]
@@ -323,10 +323,10 @@ chomp it until 42, which is the first digit."#;
         let mut chomper = Chomper::new(code);
 
         let one = chomper.chomp(|c| ! c.is_digit()).unwrap();
-        assert_eq!(one.value, "40");
+        assert_eq!(chomper.value(one), "40");
 
         let two = chomper.chomp(|c| c != '+').unwrap();
-        assert_eq!(two.value, "+");
+        assert_eq!(chomper.value(two), "+");
     }
 
     #[test]
@@ -338,7 +338,7 @@ chomp it until 42, which is the first digit."#;
         let chomper_borrow = &mut chomper;
 
         let result = chomper_borrow.chomp (|_| { false}).unwrap();
-        assert_eq!(result.value, "40");
+        assert_eq!(chomper_borrow.value(result), "40");
 
         chomper_borrow.chomp(|_| { false });
     }
@@ -372,7 +372,7 @@ chomp it until 42, which is the first digit."#;
         let mut chomper = Chomper::new(code);
         let cr = chomper.chomp_till_str(|str| str.starts_with("some")).unwrap();
         println!("the cr is {}", cr);
-        assert_eq!(cr.value, "This is ");
+        assert_eq!(chomper.value(cr), "This is ");
         assert_eq!(cr.span.startPos.index, 0);
         assert_eq!(cr.span.endPos.index, 8);
         assert_eq!(chomper.isEof, false);
@@ -384,7 +384,7 @@ chomp it until 42, which is the first digit."#;
         let mut chomper = Chomper::new(code);
         let cr = chomper.chomp_till_str(|str| str.starts_with("XXXXXXX")).unwrap();
         println!("the cr is: {}", cr);
-        assert_eq!(cr.value, "This is some text");
+        assert_eq!(chomper.value(cr), "This is some text");
         assert_eq!(cr.span.startPos.index, 0);
         assert_eq!(cr.span.endPos.index, 17);
         assert_eq!(chomper.isEof, true);
@@ -415,7 +415,7 @@ chomp it until 42, which is the first digit."#;
         let two = chomper.expect("bar");
         let combined = one + two;
         println!("add result = {}", combined);
-        assert_eq!(combined.value, "foobar");
+        assert_eq!(chomper.value(combined), "foobar");
         assert_eq!(combined.span.startPos.index, 0);
         assert_eq!(combined.span.endPos.index, 6);
         assert_eq!(chomper.isEof, true);
@@ -429,7 +429,7 @@ chomp it until 42, which is the first digit."#;
         let two = Some(chomper.expect ("bar"));
         let combined = one + two;
         println!("add result = {}", combined);
-        assert_eq!(combined.value, "foobar");
+        assert_eq!(chomper.value(combined), "foobar");
         assert_eq!(combined.span.startPos.index, 0);
         assert_eq!(combined.span.endPos.index, 6);
         assert_eq!(chomper.isEof, true);
@@ -443,7 +443,7 @@ chomp it until 42, which is the first digit."#;
         let two: Option<ChompResult> = None;
         let combined = one + two;
         println!("add result = {}", combined);
-        assert_eq!(combined.value, "foobar");
+        assert_eq!(chomper.value(combined), "foobar");
         assert_eq!(combined.span.startPos.index, 0);
         assert_eq!(combined.span.endPos.index, 6);
         assert_eq!(chomper.isEof, true);
