@@ -7,18 +7,6 @@ pub struct ChompResult {
     pub span: Span
 }
 
-// impl<'cri> ChompResult<'cri> {
-//     pub fn combine(&mut self, target: ChompResult, code: &'cri str) -> ChompResult<'cri> {
-//         if self.span.startPos.index >= target.span.startPos.index {
-//             fail!("The second ChompResult does not start immediately after the first one.");
-//         }
-
-//         ChompResult { span: Span { startPos: self.span.startPos, endPos: target.span.endPos },
-//                       hitEof: target.hitEof,
-//                       value: code.slice(self.span.startPos.index, target.span.endPos.index) }
-//     }
-// }
-
 // Fascinating what you get into when dealing with Option, and smacks very much of haskell monads. It drove me to
 //   operator overloading, even though I don't really care about the '+' syntax. And also, had to do pcwalton's workaround
 //   (entitled ""so what if I *want* overloading"") because each type can have each trait implemented only once.
@@ -29,45 +17,11 @@ trait ICanBeTheRhsOfAddToChompResult { // I am having my own fun with these life
     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult;
 }
 
-// trait ICanBeTheRhsOfAddToChompResult<'ticbroacr> { // I am having my own fun with these lifetime names, so butt out :)
-//     fn add_to_chomp_result(&self, lhs: &'ticbroacr ChompResult) -> ChompResult<'ticbroacr>;
-// }
-
-// impl<'zzzz, R: ICanBeTheRhsOfAddToChompResult> Add<R, ChompResult<'zzzz>> for ChompResult<'zzzz> {
-//     fn add(&'zzzz self, rhs: &'zzzz R) -> ChompResult<'zzzz> {
-//         rhs.add_to_chomp_result(self)
-//     }
-// }
-
 impl<R: ICanBeTheRhsOfAddToChompResult> Add<R, ChompResult> for ChompResult {
     fn add(&self, rhs: &R) -> ChompResult {
         rhs.add_to_chomp_result(self)
     }
 }
-
-// impl<'iicbroacr> ICanBeTheRhsOfAddToChompResult<'iicbroacr> for ChompResult<'iicbroacr> {
-//     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult<'iicbroacr> {
-//         if(lhs.span.startPos.index != self.span.startPos.index - 1) {
-//             fail!("The second ChompResult does not start immediately after the first one.");
-//         }
-
-//         ChompResult { span: Span { startPos: lhs.span.startPos, endPos: self.span.endPos },
-//                       hitEof: self.hitEof, fullCode: self.fullCode,
-//                       value: self.fullCode.slice(lhs.span.startPos.index, self.span.endPos.index) }
-//     }
-// }
-
-// impl<'iicbroacr> ICanBeTheRhsOfAddToChompResult<'iicbroacr> for ChompResult<'iicbroacr> {
-//     fn add_to_chomp_result<'iicbroacr>(&'iicbroacr self, lhs: &'iicbroacr ChompResult) -> ChompResult<'iicbroacr> {
-//         if(lhs.span.startPos.index != self.span.startPos.index - 1) {
-//             fail!("The second ChompResult does not start immediately after the first one.");
-//         }
-
-//         ChompResult { span: Span { startPos: lhs.span.startPos, endPos: self.span.endPos },
-//                       hitEof: self.hitEof, fullCode: self.fullCode,
-//                       value: self.fullCode.slice(lhs.span.startPos.index, self.span.endPos.index) }
-//     }
-// }
 
 impl ICanBeTheRhsOfAddToChompResult for ChompResult {
     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult {
@@ -87,36 +41,6 @@ impl ICanBeTheRhsOfAddToChompResult for Option<ChompResult> {
         }
     }
 }
-
-// impl<'iicbroacrfo> ICanBeTheRhsOfAddToChompResult<'iicbroacrfo> for Option<ChompResult<'iicbroacrfo>> {
-//     fn add_to_chomp_result(&self, lhs: &ChompResult<'iicbroacrfo>) -> ChompResult<'iicbroacrfo> {
-//         match(*self) {
-//             None => *lhs,
-//             Some(cr) => lhs + cr
-//         }
-//     }
-// }
-
-// impl<'acri> Add<ChompResult<'acri>, ChompResult<'acri>> for ChompResult<'acri> {
-//     fn add(&self, rhs: &ChompResult<'acri>) -> ChompResult<'acri> {
-//         if self.span.startPos.index >= rhs.span.startPos.index {
-//             fail!("The second ChompResult does not start immediately after the first one.");
-//         }
-
-//         ChompResult { fullCode: self.fullCode, hitEof: rhs.hitEof,
-//                       span: Span { startPos: self.span.startPos, endPos: rhs.span.endPos },
-//                       value: self.fullCode.slice(self.span.startPos.index, rhs.span.endPos.index) }
-//     }
-// }
-
-// impl<'acri> Add<Option<ChompResult<'acri>>, ChompResult<'acri>> for ChompResult<'acri> {
-//     fn add(&self, rhs: &Option<ChompResult<'acri>>) -> ChompResult<'acri> {
-//         match(rhs) {
-//             None => *self,
-//             Some(target) => *self + *target
-//         }
-//     }
-// }
 
 #[deriving(Show)]
 #[deriving(PartialEq)]
