@@ -71,7 +71,7 @@ impl<R: ICanBeTheRhsOfAddToChompResult> Add<R, ChompResult> for ChompResult {
 
 impl ICanBeTheRhsOfAddToChompResult for ChompResult {
     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult {
-        if lhs.span.startPos.index != self.span.startPos.index - 1 {
+        if self.span.startPos.index != lhs.span.endPos.index {
             fail!("The second ChompResult does not start immediately after the first one. First ChompResult: {}. Second ChompResult: {}", self, lhs);
         }
 
