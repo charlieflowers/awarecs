@@ -40,8 +40,8 @@ impl<'ti> Token<'ti> {
 }
 
 impl<'li> Lexer<'li> {
-    fn make_token(&self, cr: &ChompResult, tag: &TokenTag) -> Token<'li> {
-        Token::make(self.chomper.code.slice(cr.span.startPos, cr.span.endPos), tag, cr.span)
+    fn make_token(&self, cr: &ChompResult, tag: TokenTag) -> Token<'li> {
+        Token::make(self.chomper.code.slice(*cr.span.startPos, cr.span.endPos), tag, cr.span)
     }
 
     pub fn new(code: &'li str) -> Lexer<'li> {
@@ -112,7 +112,7 @@ impl<'li> Lexer<'li> {
     pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
         match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
             None => fail!("You called get_whitespace, but no whitespace was found."),
-            Some(cr) => cr.to_token(Whitespace)
+            Some(ref cr) => self.make_token(cr, Whitespace)
         }
     }
 
