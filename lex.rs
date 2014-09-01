@@ -150,7 +150,7 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
-                self.make_token(&self.chomper.chomp(|c| c == '\n'), Comment)
+                self.make_token_opt(&self.chomper.chomp(|c| c == '\n'), Comment)
             }
         }
     }
@@ -175,7 +175,7 @@ impl<'li> Lexer<'li> {
         // };
 
         // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
-        self.make_token(&cr, Herecomment);
+        self.make_token(&cr, Herecomment)
     }
 }
 
