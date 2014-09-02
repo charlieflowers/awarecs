@@ -40,7 +40,18 @@ impl<'ti> Token<'ti> {
                text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
     }
 
-    pub fn make_helper<'a>(chomper: &'a Chomper, tag: TokenTag, charPredicate: |char| -> bool ) -> Token<'a> {
+    // Even this, the best idea i have so far, becomes a major pain in the ass! Because I need to take chomp, I need to take a mutable chomper. Because I need to return a
+    //  Token, which requires a named lifetime, I must tie the lifetime of the returned Token to that of the incoming mutable chomper. Now, since I want to return these
+    //  Tokens from my parser routines, those parser routines must return a token with the same lifetime as that of the chomper, which is a different lifetime from that
+    //  of the chomper. Therefore, my parsing routines wind up needing their own named lifetime parameters. That forces lex() itself to need a named lifetime parameter.
+    //  Basically, the picture is this: THIS SHIT IS PAINFUL!!!!! I think they need to make some improvements to the borrow checker and the trait resolution algorithm (as they
+    //  already know and are working towards). Meanwhile, though, I must either find a much less painful way of working with Rust, or stop working with it and come back in
+    //  say about 6 months.
+    //
+    // So, for now, I conclude this: having a struct with a reference in it simply becomes a major pain in the ass. It is nearly impossible to localize that pain to one
+    //  small area. Instead, the pain spreads out like contagion. Therefore, try very hard to simply NEVER DO IT. That's not a good foundation for a language that wants to be
+    //  expressive and joyful to use, so I hope they improve it. But it is still a workable approach that would be more pleasant than C not to mention god forsaken c++.
+    pub fn make_helper<'a>(chomper: &'a mut Chomper, tag: TokenTag, charPredicate: |char| -> bool ) -> Token<'a> {
         Token::make(chomper.code, tag, chomper.chomp(charPredicate).expect(
             format!("You were expecting to see {}, but got None.", tag).as_slice()).span)
     }
@@ -223,7 +234,8 @@ mod test {
                                    },
                                    hitEof: false});
 
-        let token = Token::make("hi".as_slice(), Number, cr.unwrap().span);
+        let full_code = "hi";
+        let token = Token::make(full_code, Number, cr.unwrap().span);
         assert_eq!(token.tag, Number);
         assert_eq!(token.value, "hi");
         assert_eq!(token.span.startPos.index, 42);
