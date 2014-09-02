@@ -36,7 +36,7 @@ impl<'ti> Token<'ti> {
         // todo get rid of the "text" field because it of course copies the whole source code & you worked so hard to avoid copies
         let my_slice = span.extract(full_code);
 
-        Token {tag:tag, value: my_slice, span: span,
+        Token {tag:tag, value: my_slice,span: span,
                text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
     }
 
