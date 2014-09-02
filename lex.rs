@@ -24,70 +24,25 @@ pub enum TokenTag {
 }
 
 #[deriving(Show)]
-pub struct Token<'token> {
+pub struct Token {
     pub tag: TokenTag,
-    pub value: &'token str,
     pub span: Span,
-    pub text: String
 }
 
-impl<'ti> Token<'ti> {
-    pub fn make<'ti>(full_code: &'ti str, tag: TokenTag, span: Span) -> Token<'ti> {
+impl Token {
+    pub fn make(tag: TokenTag, span: Span) -> Token {
         // todo get rid of the "text" field because it of course copies the whole source code & you worked so hard to avoid copies
-        let my_slice = span.extract(full_code);
-
-        Token {tag:tag, value: my_slice,span: span,
-               text: ("[".to_string() + tag.to_string() + " " + my_slice.to_string() + "]").to_string()}
-    }
-
-    // Even this, the best idea i have so far, becomes a major pain in the ass! Because I need to take chomp, I need to take a mutable chomper. Because I need to return a
-    //  Token, which requires a named lifetime, I must tie the lifetime of the returned Token to that of the incoming mutable chomper. Now, since I want to return these
-    //  Tokens from my parser routines, those parser routines must return a token with the same lifetime as that of the chomper, which is a different lifetime from that
-    //  of the chomper. Therefore, my parsing routines wind up needing their own named lifetime parameters. That forces lex() itself to need a named lifetime parameter.
-    //  Basically, the picture is this: THIS SHIT IS PAINFUL!!!!! I think they need to make some improvements to the borrow checker and the trait resolution algorithm (as they
-    //  already know and are working towards). Meanwhile, though, I must either find a much less painful way of working with Rust, or stop working with it and come back in
-    //  say about 6 months.
-    //
-    // So, for now, I conclude this: having a struct with a reference in it simply becomes a major pain in the ass. It is nearly impossible to localize that pain to one
-    //  small area. Instead, the pain spreads out like contagion. Therefore, try very hard to simply NEVER DO IT. That's not a good foundation for a language that wants to be
-    //  expressive and joyful to use, so I hope they improve it. But it is still a workable approach that would be more pleasant than C not to mention god forsaken c++.
-    pub fn make_helper<'a>(chomper: &'a mut Chomper, tag: TokenTag, charPredicate: |char| -> bool ) -> Token<'a> {
-        Token::make(chomper.code, tag, chomper.chomp(charPredicate).expect(
-            format!("You were expecting to see {}, but got None.", tag).as_slice()).span)
+        Token {tag:tag, span: span}
     }
 }
 
 impl<'li> Lexer<'li> {
 
-    // Even these "static" methods don't work out. The lexer passed in needs a lifetime. And that lifetime somehow confuses the lifetime of the returned token!
-    // fn s_make_token<'lim>(lexer: &'lim Lexer, cr: &ChompResult, tag: TokenTag) -> Token<'lim> {
-    //     Token::make(lexer.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
-    // }
-
-    // fn s_make_token_opt<'limo>(lexer: &'limo Lexer, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'limo> {
-    //     match *ocr {
-    //         None => fail!("You tried to make a {} token, but you're at EOF.", tag),
-    //         Some(ref cr) => Lexer::s_make_token(lexer, cr, tag)
-    //     }
-    // }
-
-    // make_token and make_token_opt as impl methods on Lexer don't work out because of the overly strict borrow checker (issue # 6268)
-    // fn make_token(&self, cr: &ChompResult, tag: TokenTag) -> Token<'li> {
-    //     Token::make(self.chomper.code.slice(cr.span.startPos.index, cr.span.endPos.index), tag, cr.span)
-    // }
-
-    // fn make_token_opt(&self, ocr: &Option<ChompResult>, tag: TokenTag) -> Token<'li> {
-    //     match *ocr {
-    //         None => fail!("You tried to make a {} token, but you're at EOF.", tag),
-    //         Some(ref cr) => self.make_token(cr, tag)
-    //     }
-    // }
-
     pub fn new(code: &'li str) -> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
     }
 
-    pub fn lex<'x>(&'x mut self) -> Vec<Token<'x>> {
+    pub fn lex(&mut self) -> Vec<Token<'li>> {
         let mut tokens : Vec<Token> = vec![];
 
         loop {
@@ -116,7 +71,7 @@ impl<'li> Lexer<'li> {
         tokens
     }
 
-    pub fn get_identifier_or_keyword(&mut self) -> Token<'li> {
+    pub fn get_identifier_or_keyword(&mut self) -> Token {
         fn fail(msg : String) {
             fail!("You called get_identifier_or_keyword, but the next char {}", msg);
         }
@@ -157,15 +112,16 @@ impl<'li> Lexer<'li> {
         }
     }
 
-    pub fn get_whitespace<'x>(&'x mut self) -> Token<'x> { // todo, ONLY pub so you can test it, fix that later
+    pub fn get_whitespace(&mut self) -> Token { // todo, ONLY pub so you can test it, fix that later
         // match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
         //     None => fail!("You called get_whitespace, but no whitespace was found."),
         //     Some(ref cr) => self.make_token(cr, Whitespace)
         // }
 
         // self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
-        Token::make_helper(&self.chomper, Whitespace, |ch| ch.is_whitespace())
+        // Token::make_helper(&self.chomper, Whitespace, |ch| ch.is_whitespace())
         // Token::make(self.chomper.code, Whitespace, self.chomper.chomp(|ch| ! ch.is_whitespace()).expect("You were expecting Whitespace, but got None.").span)
+
     }
 
     pub fn get_number<'x>(&'x mut self) -> Token<'x> {

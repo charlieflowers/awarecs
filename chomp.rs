@@ -63,6 +63,21 @@ impl Span {
     }
 }
 
+trait ToSpan {
+    fn to_span(&self) -> &Span;
+}
+
+impl ToSpan for Span {
+    fn to_span(&self) -> &Span {
+        self
+    }
+}
+
+impl ToSpan for ChompResult {
+    fn to_span(&self) -> &Span {
+        &self.span
+    }
+}
 pub struct Chomper<'chomper> {
     pub code: &'chomper str,
     pub index: uint,
