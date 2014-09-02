@@ -41,7 +41,8 @@ impl<'ti> Token<'ti> {
     }
 
     pub fn make_helper<'a>(chomper: &'a Chomper, tag: TokenTag, charPredicate: |char| -> bool ) -> Token<'a> {
-        Token::make(chomper.code, tag, chomper.chomp(charPredicate).expect("You were expecting to see {}, but got None.", tag).span)
+        Token::make(chomper.code, tag, chomper.chomp(charPredicate).expect(
+            format!("You were expecting to see {}, but got None.", tag).as_slice()).span)
     }
 }
 
@@ -75,7 +76,7 @@ impl<'li> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
     }
 
-    pub fn lex(&mut self) -> Vec<Token<'li>> {
+    pub fn lex<'x>(&'x mut self) -> Vec<Token<'x>> {
         let mut tokens : Vec<Token> = vec![];
 
         loop {
@@ -145,28 +146,29 @@ impl<'li> Lexer<'li> {
         }
     }
 
-    pub fn get_whitespace(&mut self) -> Token<'li> { // todo, ONLY pub so you can test it, fix that later
+    pub fn get_whitespace<'x>(&'x mut self) -> Token<'x> { // todo, ONLY pub so you can test it, fix that later
         // match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
         //     None => fail!("You called get_whitespace, but no whitespace was found."),
         //     Some(ref cr) => self.make_token(cr, Whitespace)
         // }
 
         // self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
-        let imagine = Token::make_helper(self.chomper, Whitespace, |ch| ch.is_whitespace());
-        Token::make(self.chomper.code, Whitespace, self.chomper.chomp(|ch| ! ch.is_whitespace()).expect("You were expecting Whitespace, but got None.").span)
+        Token::make_helper(&self.chomper, Whitespace, |ch| ch.is_whitespace())
+        // Token::make(self.chomper.code, Whitespace, self.chomper.chomp(|ch| ! ch.is_whitespace()).expect("You were expecting Whitespace, but got None.").span)
     }
 
-    pub fn get_number(&mut self) -> Token<'li> {
+    pub fn get_number<'x>(&'x mut self) -> Token<'x> {
         // self.make_token_opt(&self.chomper.chomp(|c| ! c.is_digit()), Number)
-        Token::make(&self.chomper.code, Number, )
+        Token::make_helper(&self.chomper, Number, |c| ! c.is_digit())
 
     }
 
-    pub fn get_operator(&mut self) -> Token<'li> {
-        self.make_token_opt(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
+    pub fn get_operator<'x>(&'x mut self) -> Token<'x> {
+        // self.make_token_opt(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
+        Token::make_helper(&self.chomper, Operator, |c| c != '+' && c != '-')
     }
 
-    pub fn get_comment(&mut self) -> Token<'li> {
+    pub fn get_comment<'x>(&'x mut self) -> Token<'x> {
         // todo next line can be nicer
         if self.chomper.peek() != Some('#') { fail!("I thought I was parsing a comment, but it starts with this: {}", self.chomper.peek())}
         println!("seeing if we have herecomment");
@@ -176,14 +178,15 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
-                self.make_token_opt(&self.chomper.chomp(|c| c == '\n'), Comment)
+                // self.make_token_opt(&self.chomper.chomp(|c| c == '\n'), Comment)
+                Token::make_helper(&self.chomper, Comment, |c| c == '\n')
             }
         }
     }
 
     pub fn get_here_comment(&mut self) -> Token<'li> {
         let delimiter = self.chomper.expect("###");
-        if delimiter.hitEof {return self.make_token(&delimiter, Herecomment)};
+        if delimiter.hitEof {return Token::make(self.chomper.code, Herecomment, delimiter.span)};
         let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
         cr = delimiter + cr;
 
@@ -201,7 +204,8 @@ impl<'li> Lexer<'li> {
         // };
 
         // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
-        self.make_token(&cr, Herecomment)
+        // self.make_token(&cr, Herecomment)
+        Token::make(self.chomper.code, Herecomment, cr.span)
     }
 }
 
@@ -232,8 +236,8 @@ mod test {
         let code = "foobar";
         let mut lexer = get_lexer(code);
         let mut chomper = Chomper::new(code);
-        let cr = chomper.chomp(|c| c == 'b').unwrap();
-        let token = lexer.make_token(&cr, Whitespace); // todo charlie, thinkabout why you wanted 1st parameter to be a reference
+        // let token = lexer.make_token(&cr, Whitespace); // todo charlie, thinkabout why you wanted 1st parameter to be a reference
+        let token = Token::make_helper(&chomper, Whitespace, |c| c == 'b');
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
         assert_eq!(token.value, "foo");
