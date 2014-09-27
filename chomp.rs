@@ -13,7 +13,7 @@ pub struct ChompResult {
 //   Is the presence of Option enough to drive one to needing "overloading" and to these lengths? It sure seems appropriate in
 //   this case, because without it i'd be doing a ton of monkey coding.
 
-trait ICanBeTheRhsOfAddToChompResult { // I am having my own fun with these lifetime names, so butt out :)
+trait ICanBeTheRhsOfAddToChompResult {
     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult;
 }
 
@@ -58,12 +58,12 @@ pub struct Span {
 }
 
 impl Span {
-    pub fn extract<'a>(&self, source: &'a str) -> &'a str {
-        source.slice(self.startPos.index, self.endPos.index)
-    }
+    // pub fn extract<'a>(&self, source: &'a str) -> &'a str {
+    //     source.slice(self.startPos.index, self.endPos.index)
+    // }
 }
 
-trait ToSpan {
+pub trait ToSpan {
     fn to_span(&self) -> &Span;
 }
 
@@ -78,6 +78,7 @@ impl ToSpan for ChompResult {
         &self.span
     }
 }
+
 pub struct Chomper<'chomper> {
     pub code: &'chomper str,
     pub index: uint,

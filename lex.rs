@@ -1,5 +1,5 @@
 #![feature(macro_rules)]
-use chomp::{Chomper, ChompResult, Position, Span};
+pub use chomp::{Chomper, Span, ToSpan, ChompResult, Position};
 
 mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
@@ -23,6 +23,16 @@ pub enum TokenTag {
     Identifier,
 }
 
+impl TokenTag {
+    pub fn at<T: ToSpan>(&self, to_span: T) -> Token {
+        Token::make(*self, *to_span.to_span())
+    }
+
+    pub fn assert_at<T: ToSpan>(&self, maybe_to_span: Option<T>) -> Token {
+        self.at(maybe_to_span.expect(format!("You were quite certain you would see the token {}, but you got None.", self).as_slice()))
+    }
+}
+
 #[deriving(Show)]
 pub struct Token {
     pub tag: TokenTag,
@@ -31,10 +41,54 @@ pub struct Token {
 
 impl Token {
     pub fn make(tag: TokenTag, span: Span) -> Token {
-        // todo get rid of the "text" field because it of course copies the whole source code & you worked so hard to avoid copies
         Token {tag:tag, span: span}
     }
 }
+
+trait SourceCodeProvider {
+    fn get_source_code<'x>(&'x self) -> &'x str;
+}
+
+impl ToSpan for Token {
+    fn to_span(&self) -> &Span {
+        &self.span
+    }
+}
+
+impl<'s> SourceCodeProvider for &'s str {
+    fn get_source_code<'x>(&'x self) -> &'x str {
+        *self
+    }
+}
+
+impl<'c> SourceCodeProvider for Chomper<'c> {
+   fn get_source_code<'c>(&'c self) -> &'c str {
+       self.code
+   }
+}
+
+impl<'l> SourceCodeProvider for Lexer<'l> {
+    fn get_source_code<'l>(&'l self) -> &'l str {
+        self.chomper.code
+    }
+}
+
+fn get_region<'x, TSource: SourceCodeProvider, TSpan: ToSpan>(source: &'x TSource, span: TSpan) -> &'x str {
+    let span = span.to_span();
+    source.get_source_code().slice(span.startPos.index, span.endPos.index)
+}
+
+trait FullSource {
+    fn get_slice<'x, TSpan: ToSpan, TSource: SourceCodeProvider>(&'x self, span: &TSpan) -> &'x str;
+}
+
+impl<T: SourceCodeProvider> FullSource for T {
+    fn get_slice<'x, TSpan: ToSpan, TSource: SourceCodeProvider>(&'x self, span: &TSpan) -> &'x str {
+        let span = span.to_span();
+        self.get_source_code().slice(span.startPos.index, span.endPos.index)
+    }
+}
+
 
 impl<'li> Lexer<'li> {
 
@@ -42,7 +96,7 @@ impl<'li> Lexer<'li> {
         Lexer {chomper: Chomper::new(code)}
     }
 
-    pub fn lex(&mut self) -> Vec<Token<'li>> {
+    pub fn lex(&mut self) -> Vec<Token> {
         let mut tokens : Vec<Token> = vec![];
 
         loop {
@@ -88,11 +142,12 @@ impl<'li> Lexer<'li> {
         let rest = self.chomper.chomp(|c| Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c));
         let span = (first + rest).span;
 
-        Token::make(self.chomper.code, Identifier, span)
+        // Token::make(self.chomper.code, Identifier, span)
+        Identifier.at(span)
     }
 
     fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
-        match(ch) {
+        match ch  {
             '$' | '_' => true,
             'A'..'Z' => true,
             'a'..'z' => true,
@@ -103,7 +158,7 @@ impl<'li> Lexer<'li> {
     }
 
     fn is_valid_subsequent_char_of_identifier_or_keyword(ch: char) -> bool {
-        match(ch) {
+        match ch  {
             '$' | '_' => true,
             'a'..'z' => true,
             'A'..'Z' => true,
@@ -121,21 +176,23 @@ impl<'li> Lexer<'li> {
         // self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
         // Token::make_helper(&self.chomper, Whitespace, |ch| ch.is_whitespace())
         // Token::make(self.chomper.code, Whitespace, self.chomper.chomp(|ch| ! ch.is_whitespace()).expect("You were expecting Whitespace, but got None.").span)
+        Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace())) // todo the wrong thing here is that the token Whitespace and the fn (|ch| ! ch.is_whitespace()) truly belong together. I'm repeating myself by saying that twice in this call
 
     }
 
-    pub fn get_number<'x>(&'x mut self) -> Token<'x> {
+    pub fn get_number(&mut self) -> Token {
         // self.make_token_opt(&self.chomper.chomp(|c| ! c.is_digit()), Number)
-        Token::make_helper(&self.chomper, Number, |c| ! c.is_digit())
-
+        // Token::make_helper(&self.chomper, Number, |c| ! c.is_digit())
+        Number.assert_at(self.chomper.chomp(|c| ! c.is_digit()))
     }
 
-    pub fn get_operator<'x>(&'x mut self) -> Token<'x> {
+    pub fn get_operator(&mut self) -> Token {
         // self.make_token_opt(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
-        Token::make_helper(&self.chomper, Operator, |c| c != '+' && c != '-')
+        // Token::make_helper(&self.chomper, Operator, |c| c != '+' && c != '-')
+        Operator.assert_at(self.chomper.chomp(|c| c != '+' && c != '-'))
     }
 
-    pub fn get_comment<'x>(&'x mut self) -> Token<'x> {
+    pub fn get_comment(&mut self) -> Token {
         // todo next line can be nicer
         if self.chomper.peek() != Some('#') { fail!("I thought I was parsing a comment, but it starts with this: {}", self.chomper.peek())}
         println!("seeing if we have herecomment");
@@ -146,14 +203,16 @@ impl<'li> Lexer<'li> {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
                 // self.make_token_opt(&self.chomper.chomp(|c| c == '\n'), Comment)
-                Token::make_helper(&self.chomper, Comment, |c| c == '\n')
+                // Token::make_helper(&self.chomper, Comment, |c| c == '\n')
+                Comment.assert_at(self.chomper.chomp(|c| c == '\n'))
             }
         }
     }
 
-    pub fn get_here_comment(&mut self) -> Token<'li> {
+    pub fn get_here_comment(&mut self) -> Token {
         let delimiter = self.chomper.expect("###");
-        if delimiter.hitEof {return Token::make(self.chomper.code, Herecomment, delimiter.span)};
+        // if delimiter.hitEof {return Token::make(self.chomper.code, Herecomment, delimiter.span)};
+        if delimiter.hitEof { return Herecomment.at(delimiter); }
         let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
         cr = delimiter + cr;
 
@@ -172,14 +231,15 @@ impl<'li> Lexer<'li> {
 
         // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
         // self.make_token(&cr, Herecomment)
-        Token::make(self.chomper.code, Herecomment, cr.span)
+        // Token::make(self.chomper.code, Herecomment, cr.span)
+        Herecomment.at(cr)
     }
 }
 
 #[cfg(test)]
 mod test {
     use chomp::{Chomper, ChompResult, Span, Position};
-    use super::{Token, Lexer, Number, Operator, Whitespace, TokenTag};
+    use super::{Token, Lexer, Number, Operator, Whitespace, TokenTag, SourceCodeProvider, FullSource};
 
     #[test]
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
@@ -190,154 +250,153 @@ mod test {
                                    },
                                    hitEof: false});
 
-        let full_code = "hi";
-        let token = Token::make(full_code, Number, cr.unwrap().span);
+        let token = Number.assert_at(cr);
         assert_eq!(token.tag, Number);
-        assert_eq!(token.value, "hi");
         assert_eq!(token.span.startPos.index, 42);
         assert_eq!(token.span.endPos.index, 44);
-        assert_eq!(token.text, "[Number hi]".to_string());
     }
 
     #[test]
-    fn lex_should_be_able_to_make_a_token_from_a_chomp_result() {
+    fn should_be_posssible_to_make_a_token_from_a_chomp_result() {
         let code = "foobar";
         let mut lexer = get_lexer(code);
         let mut chomper = Chomper::new(code);
         // let token = lexer.make_token(&cr, Whitespace); // todo charlie, thinkabout why you wanted 1st parameter to be a reference
-        let token = Token::make_helper(&chomper, Whitespace, |c| c == 'b');
+        // let token = Token::make_helper(&chomper, Whitespace, |c| c == 'b');
+
+        let token = Whitespace.assert_at(chomper.chomp(|c| c == 'b')); // lying here. I'm calling it "Whitespace" cuz the TokenTag doesn't matter. It's not whitespace, and that's ok.
+
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
-        assert_eq!(token.value, "foo");
+        // assert_eq!(lexer.get_slice(&token), "foo");
         assert_eq!(token.span.startPos.index, 0);
         assert_eq!(token.span.endPos.index, 3);
-        assert_eq!(token.text, "[Whitespace foo]".to_string());
-    }
-
-    #[test]
-    fn lex_should_handle_herecomment_starting_right_at_eof() {
-        let code = "###";
-        let mut lexer = get_lexer(code);
-        let tokens = lexer.lex();
-        assert_tokens_match(&tokens, vec!["[Herecomment ###]"]);
-    }
-
-    #[test]
-    fn hello_lex() {
-        let code = r#"40 + 2
-"#;
-        let mut lexer = get_lexer(code);
-        let tokens = lexer.lex();
-        assert_tokens_match(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
     }
 
     fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
         Lexer::new(code)
     }
 
-    fn assert_tokens_match(actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
-        println!("Matching tokens: ");
-        println!("   Expecting (length of {}): {}", expectations.len(), expectations);
-        println!("   Actual (length of {}): {}", actualTokens.len(), actualTokens);
+//     #[test]
+//     fn lex_should_handle_herecomment_starting_right_at_eof() {
+//         let code = "###";
+//         let mut lexer = get_lexer(code);
+//         let tokens = lexer.lex();
+//         assert_tokens_match(&tokens, vec!["[Herecomment ###]"]);
+//     }
 
-        let mut index = 0;
-        let mut actualIter = actualTokens.iter();
-        for expect in expectations.iter() {
-            let token = actualIter.idx(index).unwrap();
-            assert_eq!(token.text, expect.to_string());
-            index = index + 1;
-        }
-    }
+//     #[test]
+//     fn hello_lex() {
+//         let code = r#"40 + 2
+// "#;
+//         let mut lexer = get_lexer(code);
+//         let tokens = lexer.lex();
+//         assert_tokens_match(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
+//     }
 
-    fn make_unpositioned_token<'lt>(text: &'lt str, tag: TokenTag) -> Token<'lt> {
-        Token::make(text, tag, Span {
-            startPos: {Position { index: 0, lineNo: 0, colNo: 0}},
-            endPos: {Position { index: 0, lineNo: 0, colNo: 0}}
-        })
-    }
+//     fn assert_tokens_match(actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
+//         println!("Matching tokens: ");
+//         println!("   Expecting (length of {}): {}", expectations.len(), expectations);
+//         println!("   Actual (length of {}): {}", actualTokens.len(), actualTokens);
 
-    #[test]
-    fn formula_with_no_spaces_should_succeed() {
-        let code = r#"40+2
-"#;
-        let mut lexer = get_lexer(code);
-        let tokens = lexer.lex();
-        dump_tokens_to_console(&tokens);
-        assert_tokens_match(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-    }
+//         let mut index = 0;
+//         let mut actualIter = actualTokens.iter();
+//         for expect in expectations.iter() {
+//             let token = actualIter.idx(index).unwrap();
+//             assert_eq!(token.text, expect.to_string());
+//             index = index + 1;
+//         }
+//     }
 
-    #[test]
-    fn make_sure_assert_tokens_itself_works() {
-        let myTokens = vec![
-            make_unpositioned_token("40", Number),
-            make_unpositioned_token("+", Operator),
-            make_unpositioned_token("2", Number)];
+//     fn make_unpositioned_token(tag: TokenTag) -> Token {
+//         Token::make(tag, Span {
+//             startPos: {Position { index: 0, lineNo: 0, colNo: 0}},
+//             endPos: {Position { index: 0, lineNo: 0, colNo: 0}}
+//         })
+//     }
 
-        assert_tokens_match(&myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-    }
+//     #[test]
+//     fn formula_with_no_spaces_should_succeed() {
+//         let code = r#"40+2
+// "#;
+//         let mut lexer = get_lexer(code);
+//         let tokens = lexer.lex();
+//         dump_tokens_to_console(&tokens);
+//         assert_tokens_match(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+//     }
 
-    #[test]
-    #[should_fail]
-    fn make_sure_assert_tokens_fails_when_it_should() {
-        let code = "40+2";
-        let myTokens = vec![
-            make_unpositioned_token(code, Number),
-            make_unpositioned_token(code, Operator),
-            make_unpositioned_token(code, Number)];
+//     #[test]
+//     fn make_sure_assert_tokens_itself_works() {
+//         let myTokens = vec![
+//             make_unpositioned_token(Number),
+//             make_unpositioned_token(Operator),
+//             make_unpositioned_token(Number)];
 
-        assert_tokens_match(&myTokens, vec!["[WrongStuff +]"]);
-    }
+//         assert_tokens_match(&myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+//     }
 
-    #[test]
-    fn should_handle_number_against_eof() {
-        let code = r#"40+2"#;
-        let mut lexer = get_lexer(code);
-        assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-    }
+//     #[test]
+//     #[should_fail]
+//     fn make_sure_assert_tokens_fails_when_it_should() {
+//         let code = "40+2";
+//         let myTokens = vec![
+//             make_unpositioned_token(Number),
+//             make_unpositioned_token(Operator),
+//             make_unpositioned_token(Number)];
 
-    #[test]
-    fn should_handle_comments_correctly() {
-        let code = r#"40
-# This is a comment
-2 + 40"#;
+//         assert_tokens_match(&myTokens, vec!["[WrongStuff +]"]);
+//     }
 
-        let mut lexer = get_lexer(code);
-        assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Whitespace \n]",
-                                               "[Comment # This is a comment]",
-                                               "[Whitespace \n]", "[Number 2]",
-                                               "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
-    }
+//     #[test]
+//     fn should_handle_number_against_eof() {
+//         let code = r#"40+2"#;
+//         let mut lexer = get_lexer(code);
+//         assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+//     }
 
-    #[test]
-    fn should_handle_herecomments_correctly() {
-        let code = r#"
-40 ### This whole thing right here is a
-herecomment that can span
-many lines. A # in the middle is no problem. It won't end until
-the proper ending delimiter is encountered. ###"#;
+//     #[test]
+//     fn should_handle_comments_correctly() {
+//         let code = r#"40
+// # This is a comment
+// 2 + 40"#;
 
-        let mut lexer = get_lexer(code);
-        assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
-                                               "[Herecomment ### This whole thing right here is a\nherecomment that can span\nmany lines. A # in the middle is no problem. It won't end until\nthe proper ending delimiter is encountered. ###]"]);
-    }
+//         let mut lexer = get_lexer(code);
+//         assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Whitespace \n]",
+//                                                "[Comment # This is a comment]",
+//                                                "[Whitespace \n]", "[Number 2]",
+//                                                "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
+//     }
 
-    #[test]
-    fn should_handle_herecomments_that_hit_eof() {
-        let code = r#"
-40 ### This whole thing right here is a
-herecomment that
-runs straight to EOF."#;
+//     #[test]
+//     fn should_handle_herecomments_correctly() {
+//         let code = r#"
+// 40 ### This whole thing right here is a
+// herecomment that can span
+// many lines. A # in the middle is no problem. It won't end until
+// the proper ending delimiter is encountered. ###"#;
 
-        let mut lexer = get_lexer(code);
-        assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
-                                               "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
-    }
+//         let mut lexer = get_lexer(code);
+//         assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
+//                                                "[Herecomment ### This whole thing right here is a\nherecomment that can span\nmany lines. A # in the middle is no problem. It won't end until\nthe proper ending delimiter is encountered. ###]"]);
+//     }
 
-    fn dump_tokens_to_console(tokens: &Vec<Token> ) {
-        let mut index :uint = 1;
-        for t in tokens.iter() {
-            println!("Token {} is {}", index, t.text);
-            index = index + 1;
-        }
-    }
+//     #[test]
+//     fn should_handle_herecomments_that_hit_eof() {
+//         let code = r#"
+// 40 ### This whole thing right here is a
+// herecomment that
+// runs straight to EOF."#;
+
+//         let mut lexer = get_lexer(code);
+//         assert_tokens_match(&lexer.lex(), vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
+//                                                "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
+//     }
+
+    // fn dump_tokens_to_console(tokens: &Vec<Token> ) {
+    //     let mut index :uint = 1;
+    //     for t in tokens.iter() {
+    //         println!("Token {} is {}", index, t.text);
+    //         index = index + 1;
+    //     }
+    // }
 }
