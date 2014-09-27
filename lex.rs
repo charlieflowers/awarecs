@@ -339,27 +339,14 @@ mod test {
         assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
     }
 
-//     #[test]
-//     fn make_sure_assert_tokens_itself_works() {
-//         let myTokens = vec![
-//             make_unpositioned_token(Number),
-//             make_unpositioned_token(Operator),
-//             make_unpositioned_token(Number)];
-
-//         assert_tokens_match(&myTokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-//     }
-
-//     #[test]
-//     #[should_fail]
-//     fn make_sure_assert_tokens_fails_when_it_should() {
-//         let code = "40+2";
-//         let myTokens = vec![
-//             make_unpositioned_token(Number),
-//             make_unpositioned_token(Operator),
-//             make_unpositioned_token(Number)];
-
-//         assert_tokens_match(&myTokens, vec!["[WrongStuff +]"]);
-//     }
+    #[test]
+    #[should_fail]
+    fn make_sure_assert_tokens_fails_when_it_should() {
+        let code = "40+2";
+        let mut lexer = get_lexer(code);
+        let myTokens = lexer.lex();
+        assert_tokens_match(&lexer, &myTokens, vec!["[WrongStuff +]"]);
+    }
 
 //     #[test]
 //     fn should_handle_number_against_eof() {
