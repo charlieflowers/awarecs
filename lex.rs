@@ -259,7 +259,7 @@ mod test {
     #[test]
     fn should_be_posssible_to_make_a_token_from_a_chomp_result() {
         let code = "foobar";
-        let mut lexer = get_lexer(code);
+        let mut lexer = Lexer::new(code);
         let mut chomper = Chomper::new(code);
         // let token = lexer.make_token(&cr, Whitespace); // todo charlie, thinkabout why you wanted 1st parameter to be a reference
         // let token = Token::make_helper(&chomper, Whitespace, |c| c == 'b');
@@ -268,15 +268,15 @@ mod test {
 
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
-        // assert_eq!(lexer.get_slice(&token), "foo");
+        assert_eq!(lexer.get_slice::<Token, Lexer>(&token), "foo");
         assert_eq!(get_region(&lexer, token), "foo");
         assert_eq!(token.span.startPos.index, 0);
         assert_eq!(token.span.endPos.index, 3);
     }
 
-    fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
-        Lexer::new(code)
-    }
+    // fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
+    //     Lexer::new(code)
+    // }
 
 //     #[test]
 //     fn lex_should_handle_herecomment_starting_right_at_eof() {
