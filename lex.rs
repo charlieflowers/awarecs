@@ -269,8 +269,12 @@ mod test {
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
         assert_eq!(lexer.get_slice::<Token, Lexer>(&token), "foo");
+        // assert_eq!(&(lexer.chomper).get_slice::<Token, &Chomper>(&token), "foo"); // And also why doesn't this work?? Lexer?
+        // assert_eq!(&code.get_slice::<Token, &'static str>(&token), "foo"); // And I can't get anything that calls based on str to work either, even though the global function does just fine.
         // assert_eq!(lexer.get_slice(&token), "foo"); // This line doesn't work but it should. Why does the compiler need the type hint here???
         assert_eq!(get_region(lexer, token), "foo");
+        assert_eq!(get_region(&code, token), "foo");
+        assert_eq!(get_region(&lexer.chomper, token), "foo");
         assert_eq!(token.span.startPos.index, 0);
         assert_eq!(token.span.endPos.index, 3);
     }
