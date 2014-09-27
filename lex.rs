@@ -269,6 +269,7 @@ mod test {
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
         assert_eq!(lexer.get_slice::<Token, Lexer>(&token), "foo");
+        // assert_eq!(lexer.get_slice(&token), "foo"); // This line doesn't work but it should. Why does the compiler need the type hint here???
         assert_eq!(get_region(lexer, token), "foo");
         assert_eq!(token.span.startPos.index, 0);
         assert_eq!(token.span.endPos.index, 3);
