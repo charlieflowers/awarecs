@@ -275,17 +275,17 @@ mod test {
         assert_eq!(token.span.endPos.index, 3);
     }
 
-    // fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
-    //     Lexer::new(code)
-    // }
+    fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {
+        Lexer::new(code)
+    }
 
-//     #[test]
-//     fn lex_should_handle_herecomment_starting_right_at_eof() {
-//         let code = "###";
-//         let mut lexer = get_lexer(code);
-//         let tokens = lexer.lex();
-//         assert_tokens_match(&tokens, vec!["[Herecomment ###]"]);
-//     }
+    // #[test]
+    // fn lex_should_handle_herecomment_starting_right_at_eof() {
+    //     let code = "###";
+    //     let mut lexer = get_lexer(code);
+    //     let tokens = lexer.lex();
+    //     assert_tokens_match(&tokens, vec!["[Herecomment ###]"]);
+    // }
 
 //     #[test]
 //     fn hello_lex() {
