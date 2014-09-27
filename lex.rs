@@ -1,5 +1,9 @@
 #![feature(macro_rules)]
+extern crate collections;
+
 pub use chomp::{Chomper, Span, ToSpan, ChompResult, Position};
+use collections::string::String;
+
 
 mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
@@ -42,6 +46,10 @@ pub struct Token {
 impl Token {
     pub fn make(tag: TokenTag, span: Span) -> Token {
         Token {tag:tag, span: span}
+    }
+
+    pub fn text<'t, TSource: SourceCodeProvider>(&self, code: &'t TSource) -> String {
+        format!("[{} {}]", self.tag, get_region(code, *self).to_string())
     }
 }
 
@@ -307,7 +315,8 @@ mod test {
         let mut actualIter = actualTokens.iter();
         for expect in expectations.iter() {
             let token = actualIter.idx(index).unwrap();
-            let token_text = format!("[{} {}]", token.tag, get_region(code, *token).to_string());
+            // let token_text = format!("[{} {}]", token.tag, get_region(code, *token).to_string());
+            let token_text = token.text(code);
             assert_eq!(token_text, expect.to_string());
             index = index + 1;
         }
@@ -326,8 +335,8 @@ mod test {
 // "#;
 //         let mut lexer = get_lexer(code);
 //         let tokens = lexer.lex();
-//         dump_tokens_to_console(&tokens);
-//         assert_tokens_match(&tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+//         dump_tokens_to_console(code, &tokens);
+//         assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
 //     }
 
 //     #[test]
@@ -397,7 +406,7 @@ mod test {
 //                                                "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
 //     }
 
-    // fn dump_tokens_to_console(tokens: &Vec<Token> ) {
+    // fn dump_tokens_to_console(code : Lexer, tokens: &Vec<Token> ) {
     //     let mut index :uint = 1;
     //     for t in tokens.iter() {
     //         println!("Token {} is {}", index, t.text);
