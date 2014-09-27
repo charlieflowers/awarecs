@@ -289,14 +289,14 @@ mod test {
         assert_tokens_match(&lexer, &tokens, vec!["[Herecomment ###]"]);
     }
 
-//     #[test]
-//     fn hello_lex() {
-//         let code = r#"40 + 2
-// "#;
-//         let mut lexer = get_lexer(code);
-//         let tokens = lexer.lex();
-//         assert_tokens_match(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
-//     }
+    #[test]
+    fn hello_lex() {
+        let code = r#"40 + 2
+"#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
+    }
 
     fn assert_tokens_match(code: &Lexer, actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
         println!("Matching tokens: ");
