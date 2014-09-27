@@ -259,10 +259,8 @@ mod test {
     #[test]
     fn should_be_posssible_to_make_a_token_from_a_chomp_result() {
         let code = "foobar";
-        let mut lexer = &Lexer::new(code);
+        let lexer = &get_lexer(code);
         let mut chomper = Chomper::new(code);
-        // let token = lexer.make_token(&cr, Whitespace); // todo charlie, thinkabout why you wanted 1st parameter to be a reference
-        // let token = Token::make_helper(&chomper, Whitespace, |c| c == 'b');
 
         let token = Whitespace.assert_at(chomper.chomp(|c| c == 'b')); // lying here. I'm calling it "Whitespace" cuz the TokenTag doesn't matter. It's not whitespace, and that's ok.
 
