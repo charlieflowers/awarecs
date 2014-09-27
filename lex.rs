@@ -329,15 +329,15 @@ mod test {
 //         })
 //     }
 
-//     #[test]
-//     fn formula_with_no_spaces_should_succeed() {
-//         let code = r#"40+2
-// "#;
-//         let mut lexer = get_lexer(code);
-//         let tokens = lexer.lex();
-//         dump_tokens_to_console(code, &tokens);
-//         assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-//     }
+    #[test]
+    fn formula_with_no_spaces_should_succeed() {
+        let code = r#"40+2
+"#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        dump_tokens_to_console(lexer, &tokens);
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+    }
 
 //     #[test]
 //     fn make_sure_assert_tokens_itself_works() {
@@ -406,11 +406,11 @@ mod test {
 //                                                "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
 //     }
 
-    // fn dump_tokens_to_console(code : Lexer, tokens: &Vec<Token> ) {
-    //     let mut index :uint = 1;
-    //     for t in tokens.iter() {
-    //         println!("Token {} is {}", index, t.text);
-    //         index = index + 1;
-    //     }
-    // }
+    fn dump_tokens_to_console(code : Lexer, tokens: &Vec<Token> ) {
+        let mut index :uint = 1;
+        for t in tokens.iter() {
+            println!("Token {} is {}", index, t.text(&code));
+            index = index + 1;
+        }
+    }
 }
