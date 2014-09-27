@@ -348,25 +348,27 @@ mod test {
         assert_tokens_match(&lexer, &myTokens, vec!["[WrongStuff +]"]);
     }
 
-//     #[test]
-//     fn should_handle_number_against_eof() {
-//         let code = r#"40+2"#;
-//         let mut lexer = get_lexer(code);
-//         assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
-//     }
+    #[test]
+    fn should_handle_number_against_eof() {
+        let code = r#"40+2"#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+    }
 
-//     #[test]
-//     fn should_handle_comments_correctly() {
-//         let code = r#"40
-// # This is a comment
-// 2 + 40"#;
+    #[test]
+    fn should_handle_comments_correctly() {
+        let code = r#"40
+# This is a comment
+2 + 40"#;
 
-//         let mut lexer = get_lexer(code);
-//         assert_tokens_match(&lexer.lex(), vec!["[Number 40]", "[Whitespace \n]",
-//                                                "[Comment # This is a comment]",
-//                                                "[Whitespace \n]", "[Number 2]",
-//                                                "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
-//     }
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Whitespace \n]",
+                                               "[Comment # This is a comment]",
+                                               "[Whitespace \n]", "[Number 2]",
+                                               "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
+    }
 
 //     #[test]
 //     fn should_handle_herecomments_correctly() {
