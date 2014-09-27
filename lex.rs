@@ -281,13 +281,13 @@ mod test {
         Lexer::new(code)
     }
 
-    // #[test]
-    // fn lex_should_handle_herecomment_starting_right_at_eof() {
-    //     let code = "###";
-    //     let mut lexer = get_lexer(code);
-    //     let tokens = lexer.lex();
-    //     assert_tokens_match(&tokens, vec!["[Herecomment ###]"]);
-    // }
+    #[test]
+    fn lex_should_handle_herecomment_starting_right_at_eof() {
+        let code = "###";
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Herecomment ###]"]);
+    }
 
 //     #[test]
 //     fn hello_lex() {
@@ -298,19 +298,20 @@ mod test {
 //         assert_tokens_match(&tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
 //     }
 
-//     fn assert_tokens_match(actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
-//         println!("Matching tokens: ");
-//         println!("   Expecting (length of {}): {}", expectations.len(), expectations);
-//         println!("   Actual (length of {}): {}", actualTokens.len(), actualTokens);
+    fn assert_tokens_match(code: &Lexer, actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
+        println!("Matching tokens: ");
+        println!("   Expecting (length of {}): {}", expectations.len(), expectations);
+        println!("   Actual (length of {}): {}", actualTokens.len(), actualTokens);
 
-//         let mut index = 0;
-//         let mut actualIter = actualTokens.iter();
-//         for expect in expectations.iter() {
-//             let token = actualIter.idx(index).unwrap();
-//             assert_eq!(token.text, expect.to_string());
-//             index = index + 1;
-//         }
-//     }
+        let mut index = 0;
+        let mut actualIter = actualTokens.iter();
+        for expect in expectations.iter() {
+            let token = actualIter.idx(index).unwrap();
+            let token_text = format!("[{} {}]", token.tag, get_region(code, *token).to_string());
+            assert_eq!(token_text, expect.to_string());
+            index = index + 1;
+        }
+    }
 
 //     fn make_unpositioned_token(tag: TokenTag) -> Token {
 //         Token::make(tag, Span {
