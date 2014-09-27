@@ -239,7 +239,7 @@ impl<'li> Lexer<'li> {
 #[cfg(test)]
 mod test {
     use chomp::{Chomper, ChompResult, Span, Position};
-    use super::{Token, Lexer, Number, Operator, Whitespace, TokenTag, SourceCodeProvider, FullSource};
+    use super::{Token, Lexer, Number, Operator, Whitespace, TokenTag, SourceCodeProvider, FullSource, get_region};
 
     #[test]
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
@@ -269,6 +269,7 @@ mod test {
         println!("token is {}", token);
         assert_eq!(token.tag, Whitespace);
         // assert_eq!(lexer.get_slice(&token), "foo");
+        assert_eq!(get_region(&lexer, token), "foo");
         assert_eq!(token.span.startPos.index, 0);
         assert_eq!(token.span.endPos.index, 3);
     }
