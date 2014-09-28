@@ -57,12 +57,6 @@ pub struct Span {
     pub endPos: Position
 }
 
-impl Span {
-    // pub fn extract<'a>(&self, source: &'a str) -> &'a str {
-    //     source.slice(self.startPos.index, self.endPos.index)
-    // }
-}
-
 pub trait ToSpan {
     fn to_span(&self) -> &Span;
 }
