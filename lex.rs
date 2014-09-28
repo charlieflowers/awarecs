@@ -7,6 +7,17 @@ use collections::string::String;
 
 mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
+macro_rules! crf {
+    ($e:expr) => {
+        println!("{} is {}", stringify!($e), $e);
+    }
+}
+
+pub fn main() {
+    println!("Hi charlie");
+    crf!(2i + 2);
+
+}
 // I think rust's module system needs some simplification. It is crazy that, even though my lex module depends on my chomp module, the lex
 //  module CANNOT say, right here, "import the chomp mod". Rather, whatever the "crate root" is must import both modules.
 //  For example see the test mod for lex.rs, which, at the top, says "mod chomp;" and "mod lex;". The crate root must call "mod" for all
@@ -321,13 +332,6 @@ mod test {
             index = index + 1;
         }
     }
-
-//     fn make_unpositioned_token(tag: TokenTag) -> Token {
-//         Token::make(tag, Span {
-//             startPos: {Position { index: 0, lineNo: 0, colNo: 0}},
-//             endPos: {Position { index: 0, lineNo: 0, colNo: 0}}
-//         })
-//     }
 
     #[test]
     fn formula_with_no_spaces_should_succeed() {
