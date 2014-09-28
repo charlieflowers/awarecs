@@ -10,7 +10,10 @@ mod chomp; // If some other crate tries to use lex, then this won't work! That c
 macro_rules! crf {
     ($e:expr) => {
         println!("{} is {}", stringify!($e), $e);
-    }
+    };
+    ($e:expr BACKWARDS) => {
+        println!("{} is what you get from {}", $e, stringify!($e));
+    };
 }
 
 pub fn main() {
@@ -20,7 +23,9 @@ pub fn main() {
         let y = 42i;
         println!("The meaning of life is {}.", y);
         y
-    })
+    });
+
+    crf!(2i+2 BACKWARDS);
 
 }
 // I think rust's module system needs some simplification. It is crazy that, even though my lex module depends on my chomp module, the lex
