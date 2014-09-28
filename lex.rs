@@ -16,6 +16,11 @@ macro_rules! crf {
 pub fn main() {
     println!("Hi charlie");
     crf!(2i + 2);
+    crf!({
+        let y = 42i;
+        println!("The meaning of life is {}.", y);
+        y
+    })
 
 }
 // I think rust's module system needs some simplification. It is crazy that, even though my lex module depends on my chomp module, the lex
