@@ -171,7 +171,6 @@ impl<'li> Lexer<'li> {
         let rest = self.chomper.chomp(|c| Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c));
         let span = (first + rest).span;
 
-        // Token::make(self.chomper.code, Identifier, span)
         Identifier.at(span)
     }
 
@@ -197,27 +196,16 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_whitespace(&mut self) -> Token { // todo, ONLY pub so you can test it, fix that later
-        // match self.chomper.chomp(|ch| ! ch.is_whitespace()) {
-        //     None => fail!("You called get_whitespace, but no whitespace was found."),
-        //     Some(ref cr) => self.make_token(cr, Whitespace)
-        // }
-
-        // self.make_token_opt(&self.chomper.chomp(|ch| ! ch.is_whitespace()), Whitespace)
-        // Token::make_helper(&self.chomper, Whitespace, |ch| ch.is_whitespace())
-        // Token::make(self.chomper.code, Whitespace, self.chomper.chomp(|ch| ! ch.is_whitespace()).expect("You were expecting Whitespace, but got None.").span)
-        Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace())) // todo the wrong thing here is that the token Whitespace and the fn (|ch| ! ch.is_whitespace()) truly belong together. I'm repeating myself by saying that twice in this call
-
+        Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace()))
+            // todo the wrong thing here is that the token Whitespace and the fn (|ch| ! ch.is_whitespace()) truly belong together. I'm repeating myself by saying that twice in this call
+            // The answer is not necessarily the OO answer ... bundle it into the struct. Anything that associates the TokenTag with the scan fn makes sense, so think outside the oo box.
     }
 
     pub fn get_number(&mut self) -> Token {
-        // self.make_token_opt(&self.chomper.chomp(|c| ! c.is_digit()), Number)
-        // Token::make_helper(&self.chomper, Number, |c| ! c.is_digit())
         Number.assert_at(self.chomper.chomp(|c| ! c.is_digit()))
     }
 
     pub fn get_operator(&mut self) -> Token {
-        // self.make_token_opt(&self.chomper.chomp(|c| c != '+' && c != '-'), Operator)
-        // Token::make_helper(&self.chomper, Operator, |c| c != '+' && c != '-')
         Operator.assert_at(self.chomper.chomp(|c| c != '+' && c != '-'))
     }
 
@@ -231,8 +219,7 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
-                // self.make_token_opt(&self.chomper.chomp(|c| c == '\n'), Comment)
-                // Token::make_helper(&self.chomper, Comment, |c| c == '\n')
+                crf!(self.chomper.text());
                 Comment.assert_at(self.chomper.chomp(|c| c == '\n'))
             }
         }
@@ -240,7 +227,6 @@ impl<'li> Lexer<'li> {
 
     pub fn get_here_comment(&mut self) -> Token {
         let delimiter = self.chomper.expect("###");
-        // if delimiter.hitEof {return Token::make(self.chomper.code, Herecomment, delimiter.span)};
         if delimiter.hitEof { return Herecomment.at(delimiter); }
         let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
         cr = delimiter + cr;
@@ -249,18 +235,6 @@ impl<'li> Lexer<'li> {
             cr = cr + self.chomper.expect("###");
         }
 
-        // let endIndex = match cr {
-        //     ChompResult { hitEof: true, ..} => cr.endIndex,
-        //     _ => {
-        //         // todo I don't like that this appears to be an assignment, but it is actually doing something more
-        //         self.chomper.expect("###");
-        //         cr.endIndex + 3
-        //     }
-        // };
-
-        // Token::make(self.chomper.code.slice(cr.startIndex - 3, endIndex), Herecomment, cr.startIndex - 3, endIndex)
-        // self.make_token(&cr, Herecomment)
-        // Token::make(self.chomper.code, Herecomment, cr.span)
         Herecomment.at(cr)
     }
 }
