@@ -1,3 +1,14 @@
 warm-up
 lexer_tests
 chomper_tests
+/example
+/chomper_tests.expanded
+/chomp
+/lex
+/flycheck_lexer_tests.rs
+/flycheck_lex.rs
+/flycheck_chomp.rs
+/trait_experiment
+/what_if_magic_number_needed_lifetime
+Cargo.lock
+target/
