@@ -4,29 +4,29 @@ use std::iter::{Enumerate};
 #[deriving(Show)]
 struct ConsumeResult<'code_to_scan> {
      value: &'code_to_scan str,
-     startIndex: uint,
-     endIndex: uint,
+     start_index: uint,
+     end_index: uint,
 }
 
 struct Scanner<'code_to_scan> {
     code: &'code_to_scan str,
     char_iterator: Enumerate<Chars<'code_to_scan>>,
-    isEof: bool,
+    is_eof: bool,
 }
 
 impl<'code_to_scan> Scanner<'code_to_scan> {
     fn new<'code_to_scan>(code: &'code_to_scan str) -> Scanner<'code_to_scan> {
-        Scanner{code: code, char_iterator: code.chars().enumerate(), isEof: false}
+        Scanner{code: code, char_iterator: code.chars().enumerate(), is_eof: false}
     }
 
     fn assert_not_eof<'code_to_scan>(&'code_to_scan self) {
-        if self.isEof {fail!("Scanner is at EOF."); }
+        if self.is_eof {fail!("Scanner is at EOF."); }
     }
 
     fn next(&mut self) -> Option<(uint, char)> {
         self.assert_not_eof();
         let result = self.char_iterator.next();
-        if result == None { self.isEof = true; }
+        if result == None { self.is_eof = true; }
         return result;
     }
 
@@ -35,25 +35,25 @@ impl<'code_to_scan> Scanner<'code_to_scan> {
     // ...............^^^^^^^^^^^^^^^
     fn consume_till(&mut self, quit: |char| -> bool) -> ConsumeResult<'code_to_scan> {
         self.assert_not_eof();
-        let mut startIndex: Option<uint> = None;
-        let mut endIndex: Option<uint> = None;
+        let mut start_index: Option<uint> = None;
+        let mut end_index: Option<uint> = None;
 
         loop {
             let should_quit = match self.next() {
                 None => {
-                    endIndex = Some(endIndex.unwrap() + 1);
+                    end_index = Some(end_index.unwrap() + 1);
                     true
                 },
                 Some((i, ch)) => {
-                    if startIndex == None { startIndex = Some(i);}
-                    endIndex = Some(i);
+                    if start_index == None { start_index = Some(i);}
+                    end_index = Some(i);
                     quit (ch)
                 }
             };
 
             if should_quit {
-                return ConsumeResult{ value: self.code.slice(startIndex.unwrap(), endIndex.unwrap()),
-                                      startIndex:startIndex.unwrap(), endIndex: endIndex.unwrap() };
+                return ConsumeResult{ value: self.code.slice(start_index.unwrap(), end_index.unwrap()),
+                                      start_index:start_index.unwrap(), end_index: end_index.unwrap() };
             }
         }
     }
@@ -67,8 +67,8 @@ fn main() {
     iterator.next();
 
 
-    let codeToScan = "40 + 2";
-    let mut scanner = Scanner::new(codeToScan);
+    let code_to_scan = "40 + 2";
+    let mut scanner = Scanner::new(code_to_scan);
     let first_token = scanner.consume_till(|c| { ! c.is_digit ()});
     println!("first token is: {}", first_token);
     let second_token = scanner.consume_till(|c| { c.is_whitespace ()});
