@@ -1,11 +1,8 @@
-#![feature(macro_rules)]
-extern crate collections;
+use chomp::*;
 
-pub use chomp::{Chomper, Span, ToSpan, ChompResult, Position};
 use collections::string::String;
 
-
-mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
+// mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
 
 macro_rules! crf {
     ($e:expr) => {
@@ -16,18 +13,18 @@ macro_rules! crf {
     };
 }
 
-pub fn main() {
-    println!("Hi charlie");
-    crf!(2i + 2);
-    crf!({
-        let y = 42i;
-        println!("The meaning of life is {}.", y);
-        y
-    });
+// pub fn main() {
+//     println!("Hi charlie");
+//     crf!(2i + 2);
+//     crf!({
+//         let y = 42i;
+//         println!("The meaning of life is {}.", y);
+//         y
+//     });
 
-    crf!(2i+2 BACKWARDS);
+//     crf!(2i+2 BACKWARDS);
 
-}
+// }
 // I think rust's module system needs some simplification. It is crazy that, even though my lex module depends on my chomp module, the lex
 //  module CANNOT say, right here, "import the chomp mod". Rather, whatever the "crate root" is must import both modules.
 //  For example see the test mod for lex.rs, which, at the top, says "mod chomp;" and "mod lex;". The crate root must call "mod" for all
@@ -74,7 +71,7 @@ impl Token {
     }
 }
 
-trait SourceCodeProvider {
+pub trait SourceCodeProvider {
     fn get_source_code<'x>(&'x self) -> &'x str;
 }
 
@@ -107,7 +104,7 @@ fn get_region<'x, TSource: SourceCodeProvider, TSpan: ToSpan>(source: &'x TSourc
     source.get_source_code().slice(span.startPos.index, span.endPos.index)
 }
 
-trait FullSource {
+pub trait FullSource {
     fn get_slice<'x, TSpan: ToSpan, TSource: SourceCodeProvider>(&'x self, span: &TSpan) -> &'x str;
 }
 
