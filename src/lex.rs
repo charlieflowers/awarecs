@@ -42,7 +42,7 @@ pub enum TokenTag {
     Operator,
     Herecomment,
     Comment,
-    Identifier,
+    Word,
 }
 
 impl TokenTag {
@@ -131,7 +131,7 @@ impl<'li> Lexer<'li> {
                 None => break,
                 Some(c) => {
                     let token = match c {
-                        ch if Lexer::is_valid_first_char_of_identifier_or_keyword(ch) => self.get_identifier_or_keyword(),
+                        ch if Lexer::is_valid_first_char_of_word(ch) => self.get_word(),
                         ws if ws.is_whitespace() => self.get_whitespace(),
                         num if num.is_digit() => self.get_number(),
                         '+' | '-' => self.get_operator(),
@@ -151,27 +151,27 @@ impl<'li> Lexer<'li> {
         tokens
     }
 
-    pub fn get_identifier_or_keyword(&mut self) -> Token {
+    pub fn get_word(&mut self) -> Token {
         fn fail(msg : String) {
-            fail!("You called get_identifier_or_keyword, but the next char {}", msg);
+            fail!("You called get_word, but the next char {}", msg);
         }
         match self.chomper.peek() {
             None => fail(String::from_str("is the end of file.")),
             Some(ch) => {
-                if ! Lexer::is_valid_first_char_of_identifier_or_keyword(ch) {
+                if ! Lexer::is_valid_first_char_of_word(ch) {
                     fail(format!("is not a valid first char for a word. Char is {}", ch));
                 }
             }
         };
 
         let first = self.chomper.chomp_count(1).unwrap();
-        let rest = self.chomper.chomp(|c| { ! Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c) });
+        let rest = self.chomper.chomp(|c| { ! Lexer::is_valid_subsequent_char_of_word(c) });
         let span = (first + rest).span;
 
-        Identifier.at(span)
+        Word.at(span)
     }
 
-    fn is_valid_first_char_of_identifier_or_keyword(ch: char) -> bool {
+    fn is_valid_first_char_of_word(ch: char) -> bool {
         match ch  {
             '$' | '_' => true,
             'A'..'Z' => true,
@@ -182,7 +182,7 @@ impl<'li> Lexer<'li> {
         }
     }
 
-    fn is_valid_subsequent_char_of_identifier_or_keyword(ch: char) -> bool {
+    fn is_valid_subsequent_char_of_word(ch: char) -> bool {
         match ch  {
             '$' | '_' => true,
             'a'..'z' => true,
@@ -393,27 +393,27 @@ runs straight to EOF."#;
     }
 
     #[test]
-    fn should_end_identifier_at_first_illegal_char() {
+    fn should_end_word_at_first_illegal_char() {
         let code = r#"someIden+tifier"#;
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
         dump_tokens_to_console(lexer, &tokens);
-        assert_tokens_match(&lexer, &tokens, vec!["[Identifier someIden]", "[Operator +]", "[Identifier tifier]"]);
+        assert_tokens_match(&lexer, &tokens, vec!["[Word someIden]", "[Operator +]", "[Word tifier]"]);
     }
 
     #[test]
-    fn should_be_able_to_parse_an_identifier_right_up_against_eof() {
-        let code = r#"someIdentifier"#;
+    fn should_be_able_to_lex_an_word_right_up_against_eof() {
+        let code = r#"someWord"#;
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[Identifier someIdentifier]"]);
+        assert_tokens_match(&lexer, &tokens, vec!["[Word someWord]"]);
     }
 
     #[test]
-    fn should_lex_an_identifier_followed_by_a_number() {
-        let code = "someIdentifier 42";
+    fn should_lex_a_word_followed_by_a_number() {
+        let code = "someWord 42";
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[Identifier someIdentifier]", "[Whitespace  ]", "[Number 42]"]);
+        assert_tokens_match(&lexer, &tokens, vec!["[Word someWord]", "[Whitespace  ]", "[Number 42]"]);
     }
 }
