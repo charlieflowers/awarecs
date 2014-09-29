@@ -1,78 +1,78 @@
-// This file demonstrates the overloading workaround when the root item needs a lifetime annotation.
+// // This file demonstrates the overloading workaround when the root item needs a lifetime annotation.
 
-#[deriving(Show)]
-pub struct MagicNumber<'m> {
-    irrelevant_slice_that_needs_lifetime: &'m str,
-    value: uint
-}
+// #[deriving(Show)]
+// pub struct MagicNumber<'m> {
+//     irrelevant_slice_that_needs_lifetime: &'m str,
+//     value: uint
+// }
 
-// During this process, don't get confused. THERE MUST BE ONE AND ONLY ONE IMPLEMENTATION OF ADD!
-// impl<'i, R: CanBeAddedToMagicNumber>  Add<R, MagicNumber<'i>> for MagicNumber<'i> {
-//     fn add<'g>(&'g self, rhs: &'g R) -> MagicNumber<'g> {
-//         rhs.add_to_magic_number(self)
+// // During this process, don't get confused. THERE MUST BE ONE AND ONLY ONE IMPLEMENTATION OF ADD!
+// // impl<'i, R: CanBeAddedToMagicNumber>  Add<R, MagicNumber<'i>> for MagicNumber<'i> {
+// //     fn add<'g>(&'g self, rhs: &'g R) -> MagicNumber<'g> {
+// //         rhs.add_to_magic_number(self)
+// //     }
+// // }
+
+// // trait CanBeAddedToMagicNumber {
+// //     fn add_to_magic_number<'h>(&'h self, lhs: &'h MagicNumber) -> MagicNumber<'h>;
+// // }
+
+// // impl<'j> CanBeAddedToMagicNumber for MagicNumber<'j> {
+// //     fn add_to_magic_number<'k>(&'k self, lhs: &'k MagicNumber) -> MagicNumber<'k> {
+// //         MagicNumber { value: lhs.value + self.value, irrelevant_slice_that_needs_lifetime: lhs.irrelevant_slice_that_needs_lifetime }
+// //     }
+// // }
+
+// // impl<'m> CanBeAddedToMagicNumber for Option<MagicNumber<'m>> {
+// //     fn add_to_magic_number<'n>(&'n self, lhs: &'n MagicNumber) -> MagicNumber<'n> {
+// //         if self.is_none() { return *lhs; }
+// //         lhs + self.unwrap()
+// //     }
+// // }
+
+// fn main() {
+//     // let one = MagicNumber { value: 40, irrelevant_slice_that_needs_lifetime: "hey" };
+//     // let two = MagicNumber { value: 2, irrelevant_slice_that_needs_lifetime: "hey" };
+//     // let result = one + two;
+//     // println!("ignore the slice value of {}", result.irrelevant_slice_that_needs_lifetime); // prevents compiler warning
+//     // println!("result: {}", result);
+//     // assert_eq!(result.value, 42);
+
+//     // let three : Option<MagicNumber> = None;
+
+//     // let option_result = result + three;
+//     // println!("option result: {}", option_result);
+//     // assert_eq!(option_result.value, 42);
+
+//     let r = 42.foo_it(2);
+//     println!("got {}", r);
+//     assert_eq!(84, r.some_number);
+
+//     let ddd = 'c'.foo_it(2);
+//     println!("got {}", ddd);
+//     assert_eq!(22, ddd.some_number);
+// }
+
+// #[deriving(Show)]
+// pub struct Foo {
+//     some_number: uint
+// }
+
+// trait Fooable {
+//     fn foo_it(&self, number: uint) -> Foo;
+// }
+
+// impl Fooable for uint {
+//     fn foo_it(&self, number: uint) -> Foo {
+//         Foo { some_number: *self * number }
 //     }
 // }
 
-// trait CanBeAddedToMagicNumber {
-//     fn add_to_magic_number<'h>(&'h self, lhs: &'h MagicNumber) -> MagicNumber<'h>;
-// }
-
-// impl<'j> CanBeAddedToMagicNumber for MagicNumber<'j> {
-//     fn add_to_magic_number<'k>(&'k self, lhs: &'k MagicNumber) -> MagicNumber<'k> {
-//         MagicNumber { value: lhs.value + self.value, irrelevant_slice_that_needs_lifetime: lhs.irrelevant_slice_that_needs_lifetime }
+// impl Fooable for char {
+//     fn foo_it<'xxx>(&'xxx self, number: uint) -> Foo<'xxx> {
+//         Foo { some_number: if *self == 'c' { 22 } else { 100 } }
 //     }
 // }
-
-// impl<'m> CanBeAddedToMagicNumber for Option<MagicNumber<'m>> {
-//     fn add_to_magic_number<'n>(&'n self, lhs: &'n MagicNumber) -> MagicNumber<'n> {
-//         if self.is_none() { return *lhs; }
-//         lhs + self.unwrap()
-//     }
-// }
-
-fn main() {
-    // let one = MagicNumber { value: 40, irrelevant_slice_that_needs_lifetime: "hey" };
-    // let two = MagicNumber { value: 2, irrelevant_slice_that_needs_lifetime: "hey" };
-    // let result = one + two;
-    // println!("ignore the slice value of {}", result.irrelevant_slice_that_needs_lifetime); // prevents compiler warning
-    // println!("result: {}", result);
-    // assert_eq!(result.value, 42);
-
-    // let three : Option<MagicNumber> = None;
-
-    // let option_result = result + three;
-    // println!("option result: {}", option_result);
-    // assert_eq!(option_result.value, 42);
-
-    let r = 42.foo_it(2);
-    println!("got {}", r);
-    assert_eq!(84, r.some_number);
-
-    let ddd = 'c'.foo_it(2);
-    println!("got {}", ddd);
-    assert_eq!(22, ddd.some_number);
-}
-
-#[deriving(Show)]
-pub struct Foo {
-    some_number: uint
-}
-
-trait Fooable {
-    fn foo_it(&self, number: uint) -> Foo;
-}
-
-impl Fooable for uint {
-    fn foo_it(&self, number: uint) -> Foo {
-        Foo { some_number: *self * number }
-    }
-}
-
-impl Fooable for char {
-    fn foo_it<'xxx>(&'xxx self, number: uint) -> Foo<'xxx> {
-        Foo { some_number: if *self == 'c' { 22 } else { 100 } }
-    }
-}
 
 // Here's how the trnsformation unfolded step by step:
 // 1. I added the slice to MagicNumber, and a line in main to print it out so we wouldn't get compiler warning.

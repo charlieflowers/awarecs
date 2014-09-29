@@ -1,8 +1,8 @@
 #![feature(globs)]
-extern crate the_project;
+extern crate awarecs;
 
-use the_project::chomp::*;
-use the_project::lex::*;
+use awarecs::chomp::*;
+use awarecs::lex::*;
 
 fn main() {
     println!("hello from the lex executable");
