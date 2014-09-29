@@ -9,15 +9,15 @@ fn main() {
 
     let cr = Some(ChompResult {
         span: Span {
-            startPos: Position { index: 42, lineNo: 42, colNo: 42 },
-            endPos: Position { index: 44, lineNo: 44, colNo: 44 }
+            start_pos: Position { index: 42, line_no: 42, col_no: 42 },
+            end_pos: Position { index: 44, line_no: 44, col_no: 44 }
         },
-        hitEof: false});
+        hit_eof: false});
 
     let token = Number.assert_at(cr);
     // crf!(token);
     assert_eq!(token.tag, Number);
-    assert_eq!(token.span.startPos.index, 42);
-    assert_eq!(token.span.endPos.index, 44);
+    assert_eq!(token.span.start_pos.index, 42);
+    assert_eq!(token.span.end_pos.index, 44);
     println!("The token is {}", token);
 }

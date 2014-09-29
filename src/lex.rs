@@ -101,7 +101,7 @@ impl<'l> SourceCodeProvider for Lexer<'l> {
 
 fn get_region<'x, TSource: SourceCodeProvider, TSpan: ToSpan>(source: &'x TSource, span: TSpan) -> &'x str {
     let span = span.to_span();
-    source.get_source_code().slice(span.startPos.index, span.endPos.index)
+    source.get_source_code().slice(span.start_pos.index, span.end_pos.index)
 }
 
 pub trait FullSource {
@@ -111,7 +111,7 @@ pub trait FullSource {
 impl<'coolness, T: SourceCodeProvider> FullSource for &'coolness T {
     fn get_slice<'x, TSpan: ToSpan, TSource: SourceCodeProvider>(&'x self, span: &TSpan) -> &'x str {
         let span = span.to_span();
-        self.get_source_code().slice(span.startPos.index, span.endPos.index)
+        self.get_source_code().slice(span.start_pos.index, span.end_pos.index)
     }
 }
 
@@ -126,7 +126,7 @@ impl<'li> Lexer<'li> {
         let mut tokens : Vec<Token> = vec![];
 
         loop {
-            if self.chomper.isEof { break; }
+            if self.chomper.is_eof { break; }
             match self.chomper.peek() {
                 None => break,
                 Some(c) => {
@@ -224,11 +224,11 @@ impl<'li> Lexer<'li> {
 
     pub fn get_here_comment(&mut self) -> Token {
         let delimiter = self.chomper.expect("###");
-        if delimiter.hitEof { return Herecomment.at(delimiter); }
+        if delimiter.hit_eof { return Herecomment.at(delimiter); }
         let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
         cr = delimiter + cr;
 
-        if ! cr.hitEof {
+        if ! cr.hit_eof {
             cr = cr + self.chomper.expect("###");
         }
 
@@ -246,16 +246,16 @@ mod test {
     fn option_chomp_result_that_is_some_should_be_convertable_to_token() {
         let cr = Some(ChompResult {
                                    span: Span {
-                                       startPos: Position { index: 42, lineNo: 42, colNo: 42 },
-                                       endPos: Position { index: 44, lineNo: 44, colNo: 44 }
+                                       start_pos: Position { index: 42, line_no: 42, col_no: 42 },
+                                       end_pos: Position { index: 44, line_no: 44, col_no: 44 }
                                    },
-                                   hitEof: false});
+                                   hit_eof: false});
 
         let token = Number.assert_at(cr);
         crf!(token);
         assert_eq!(token.tag, Number);
-        assert_eq!(token.span.startPos.index, 42);
-        assert_eq!(token.span.endPos.index, 44);
+        assert_eq!(token.span.start_pos.index, 42);
+        assert_eq!(token.span.end_pos.index, 44);
     }
 
     #[test]
@@ -275,8 +275,8 @@ mod test {
         assert_eq!(get_region(lexer, token), "foo");
         assert_eq!(get_region(&code, token), "foo");
         assert_eq!(get_region(&lexer.chomper, token), "foo");
-        assert_eq!(token.span.startPos.index, 0);
-        assert_eq!(token.span.endPos.index, 3);
+        assert_eq!(token.span.start_pos.index, 0);
+        assert_eq!(token.span.end_pos.index, 3);
     }
 
     fn get_lexer<'code>(code: &'code str) -> Lexer<'code> {

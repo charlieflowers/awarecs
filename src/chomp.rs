@@ -3,7 +3,7 @@ pub use std::iter::{Enumerate};
 
 #[deriving(Show)]
 pub struct ChompResult {
-    pub hitEof: bool,
+    pub hit_eof: bool,
     pub span: Span
 }
 
@@ -25,11 +25,11 @@ impl<R: ICanBeTheRhsOfAddToChompResult> Add<R, ChompResult> for ChompResult {
 
 impl ICanBeTheRhsOfAddToChompResult for ChompResult {
     fn add_to_chomp_result(&self, lhs: &ChompResult) -> ChompResult {
-        if self.span.startPos.index != lhs.span.endPos.index {
+        if self.span.start_pos.index != lhs.span.end_pos.index {
             fail!("The second ChompResult does not start immediately after the first one. First ChompResult: {}. Second ChompResult: {}", self, lhs);
         }
 
-        ChompResult { span: Span { startPos: lhs.span.startPos, endPos: self.span.endPos }, hitEof: self.hitEof }
+        ChompResult { span: Span { start_pos: lhs.span.start_pos, end_pos: self.span.end_pos }, hit_eof: self.hit_eof }
     }
 }
 
@@ -46,15 +46,15 @@ impl ICanBeTheRhsOfAddToChompResult for Option<ChompResult> {
 #[deriving(PartialEq)]
 pub struct Position {
     pub index: uint,
-    pub lineNo: uint,
-    pub colNo: uint
+    pub line_no: uint,
+    pub col_no: uint
 }
 
 #[deriving(Show)]
 #[deriving(PartialEq)]
 pub struct Span {
-    pub startPos: Position,
-    pub endPos: Position
+    pub start_pos: Position,
+    pub end_pos: Position
 }
 
 pub trait ToSpan {
@@ -77,23 +77,23 @@ pub struct Chomper<'chomper> {
     pub code: &'chomper str,
     pub index: uint,
     char_iterator: Enumerate<Chars<'chomper>>,
-    pub isEof: bool,
-    pub lineNo: uint,
-    pub colNo: uint,
+    pub is_eof: bool,
+    pub line_no: uint,
+    pub col_no: uint,
 }
 
 impl<'ci> Chomper<'ci> {
     pub fn new(code: &'ci str) -> Chomper<'ci> {
         // don't forget, line numbers start at 1!!!!
-        Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), isEof: false, lineNo: 1, colNo: 0}
+        Chomper{code: code, index: 0, char_iterator: code.chars().enumerate(), is_eof: false, line_no: 1, col_no: 0}
     }
 
     pub fn position(&self) -> Position {
-        Position { index: self.index, lineNo: self.lineNo, colNo: self.colNo }
+        Position { index: self.index, line_no: self.line_no, col_no: self.col_no }
     }
 
     fn assert_not_eof(&self) {
-        if self.isEof {fail!("Chomper is at EOF."); }
+        if self.is_eof {fail!("Chomper is at EOF."); }
     }
 
     pub fn peek(&self) -> Option<char> {
@@ -113,13 +113,13 @@ impl<'ci> Chomper<'ci> {
 
         match result {
             None => {
-                self.isEof = true;
+                self.is_eof = true;
             },
             Some((_, '\n')) => {
-                self.lineNo = self.lineNo + 1;
-                self.colNo = 0;
+                self.line_no = self.line_no + 1;
+                self.col_no = 0;
             },
-            _ => self.colNo = self.colNo + 1
+            _ => self.col_no = self.col_no + 1
         };
 
         return result;
@@ -153,32 +153,32 @@ impl<'ci> Chomper<'ci> {
     fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult> {
         self.assert_not_eof();
 
-        let mut startPosition: Option<Position> = None;
-        let mut endPosition: Option<Position> = None;
+        let mut start_position: Option<Position> = None;
+        let mut end_position: Option<Position> = None;
 
         println!("starting a chomp at text: {}", self.text());
         println!("index is: {}", self.index);
-        println!("isEof is {}", self.isEof);
+        println!("is_eof is {}", self.is_eof);
         println!("last valid index of code is {}", self.code.len() - 1);
         // todo I KNOW this can be simplified and cleaned up
         loop {
             let should_quit = match self.peek() {
                 None => {
                     // This means, there IS no next character. EOF.
-                    endPosition = Some(self.position());
+                    end_position = Some(self.position());
                     // Still need to call next(), to fully put chomper into EOF state.
                     self.next();
                     true
                 },
                 Some(ch) => {
                     if char_quit(ch) || str_quit(self.text()) {
-                        endPosition = Some(self.position());
+                        end_position = Some(self.position());
                         true
                     } else {
                         println!("Not time to quit yet!");
-                        if startPosition == None {
+                        if start_position == None {
                             println!("setting start index for chomp at {}", self.index);
-                            startPosition = Some(self.position());
+                            start_position = Some(self.position());
                         }
                         self.next();
                         false
@@ -188,12 +188,12 @@ impl<'ci> Chomper<'ci> {
 
             if should_quit {
                 println!("Just about to create ChompResult");
-                println!("startPosition is: {}", startPosition);
-                println!("endPosition is: {}", endPosition);
+                println!("start_position is: {}", start_position);
+                println!("end_position is: {}", end_position);
 
-                if startPosition == None {return None;}
-                let cr = Some(ChompResult { span: Span { startPos: startPosition.unwrap(), endPos: endPosition.unwrap() },
-                                            hitEof: self.isEof });
+                if start_position == None {return None;}
+                let cr = Some(ChompResult { span: Span { start_pos: start_position.unwrap(), end_pos: end_position.unwrap() },
+                                            hit_eof: self.is_eof });
 
                 println!("Full chomp result is: {}", cr);
                 return cr;
@@ -201,8 +201,8 @@ impl<'ci> Chomper<'ci> {
         }
     }
 
-    pub fn value(&self, chompResult: ChompResult) -> &'ci str {
-        self.code.slice(chompResult.span.startPos.index, chompResult.span.endPos.index)
+    pub fn value(&self, chomp_result: ChompResult) -> &'ci str {
+        self.code.slice(chomp_result.span.start_pos.index, chomp_result.span.end_pos.index)
     }
 }
 
@@ -219,11 +219,11 @@ chomp it until 42, which is the first digit."#;
 
         let mut chomper = Chomper::new(code);
         let cr = chomper.chomp(|c| c.is_digit()).unwrap();
-        assert_eq!(cr.span.startPos.lineNo, 1);
-        assert_eq!(cr.span.startPos.colNo, 0);
+        assert_eq!(cr.span.start_pos.line_no, 1);
+        assert_eq!(cr.span.start_pos.col_no, 0);
 
-        assert_eq!(cr.span.endPos.lineNo, 4);
-        assert_eq!(cr.span.endPos.colNo, 15);
+        assert_eq!(cr.span.end_pos.line_no, 4);
+        assert_eq!(cr.span.end_pos.col_no, 15);
     }
 
     #[test]
@@ -313,9 +313,9 @@ chomp it until 42, which is the first digit."#;
         let cr = chomper.chomp_till_str(|str| str.starts_with("some")).unwrap();
         println!("the cr is {}", cr);
         assert_eq!(chomper.value(cr), "This is ");
-        assert_eq!(cr.span.startPos.index, 0);
-        assert_eq!(cr.span.endPos.index, 8);
-        assert_eq!(chomper.isEof, false);
+        assert_eq!(cr.span.start_pos.index, 0);
+        assert_eq!(cr.span.end_pos.index, 8);
+        assert_eq!(chomper.is_eof, false);
     }
 
     #[test]
@@ -325,9 +325,9 @@ chomp it until 42, which is the first digit."#;
         let cr = chomper.chomp_till_str(|str| str.starts_with("XXXXXXX")).unwrap();
         println!("the cr is: {}", cr);
         assert_eq!(chomper.value(cr), "This is some text");
-        assert_eq!(cr.span.startPos.index, 0);
-        assert_eq!(cr.span.endPos.index, 17);
-        assert_eq!(chomper.isEof, true);
+        assert_eq!(cr.span.start_pos.index, 0);
+        assert_eq!(cr.span.end_pos.index, 17);
+        assert_eq!(chomper.is_eof, true);
     }
 
     #[test]
@@ -356,9 +356,9 @@ chomp it until 42, which is the first digit."#;
         let combined = one + two;
         println!("add result = {}", combined);
         assert_eq!(chomper.value(combined), "foobar");
-        assert_eq!(combined.span.startPos.index, 0);
-        assert_eq!(combined.span.endPos.index, 6);
-        assert_eq!(chomper.isEof, true);
+        assert_eq!(combined.span.start_pos.index, 0);
+        assert_eq!(combined.span.end_pos.index, 6);
+        assert_eq!(chomper.is_eof, true);
     }
 
     #[test]
@@ -370,9 +370,9 @@ chomp it until 42, which is the first digit."#;
         let combined = one + two;
         println!("add result = {}", combined);
         assert_eq!(chomper.value(combined), "foobar");
-        assert_eq!(combined.span.startPos.index, 0);
-        assert_eq!(combined.span.endPos.index, 6);
-        assert_eq!(chomper.isEof, true);
+        assert_eq!(combined.span.start_pos.index, 0);
+        assert_eq!(combined.span.end_pos.index, 6);
+        assert_eq!(chomper.is_eof, true);
     }
 
     #[test]
@@ -384,8 +384,8 @@ chomp it until 42, which is the first digit."#;
         let combined = one + two;
         println!("add result = {}", combined);
         assert_eq!(chomper.value(combined), "foobar");
-        assert_eq!(combined.span.startPos.index, 0);
-        assert_eq!(combined.span.endPos.index, 6);
-        assert_eq!(chomper.isEof, true);
+        assert_eq!(combined.span.start_pos.index, 0);
+        assert_eq!(combined.span.end_pos.index, 6);
+        assert_eq!(chomper.is_eof, true);
     }
 }
