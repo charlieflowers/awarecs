@@ -165,7 +165,7 @@ impl<'li> Lexer<'li> {
         };
 
         let first = self.chomper.chomp_count(1).unwrap();
-        let rest = self.chomper.chomp(|c| Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c));
+        let rest = self.chomper.chomp(|c| { ! Lexer::is_valid_subsequent_char_of_identifier_or_keyword(c) });
         let span = (first + rest).span;
 
         Identifier.at(span)
@@ -390,5 +390,30 @@ runs straight to EOF."#;
             println!("Token {} is {}", index, t.text(&code));
             index = index + 1;
         }
+    }
+
+    #[test]
+    #[should_fail]
+    fn should_detect_bad_char_in_middle_of_identifier() {
+        let code = r#"someIden~tifier"#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        dump_tokens_to_console(lexer, &tokens);
+    }
+
+    #[test]
+    fn should_be_able_to_parse_an_identifier_right_up_against_eof() {
+        let code = r#"someIdentifier"#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Identifier someIdentifier]"]);
+    }
+
+    #[test]
+    fn should_lex_an_identifier_followed_by_a_number() {
+        let code = "someIdentifier 42";
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Identifier someIdentifier]", "[Whitespace  ]", "[Number 42]"]);
     }
 }
