@@ -393,12 +393,12 @@ runs straight to EOF."#;
     }
 
     #[test]
-    #[should_fail]
-    fn should_detect_bad_char_in_middle_of_identifier() {
-        let code = r#"someIden~tifier"#;
+    fn should_end_identifier_at_first_illegal_char() {
+        let code = r#"someIden+tifier"#;
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
         dump_tokens_to_console(lexer, &tokens);
+        assert_tokens_match(&lexer, &tokens, vec!["[Identifier someIden]", "[Operator +]", "[Identifier tifier]"]);
     }
 
     #[test]
