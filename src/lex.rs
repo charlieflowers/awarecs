@@ -99,9 +99,10 @@ impl<'l> SourceCodeProvider for Lexer<'l> {
     }
 }
 
-fn get_region<'x, TSource: SourceCodeProvider, TSpan: ToSpan>(source: &'x TSource, span: TSpan) -> &'x str {
-    let span = span.to_span();
-    source.get_source_code().slice(span.start_pos.index, span.end_pos.index)
+fn get_region<'x, TSource, TSpan>(source: &'x TSource, span: TSpan) -> &'x str
+    where TSource: SourceCodeProvider, TSpan: ToSpan {
+        let span = span.to_span();
+        source.get_source_code().slice(span.start_pos.index, span.end_pos.index)
 }
 
 pub trait FullSource {
