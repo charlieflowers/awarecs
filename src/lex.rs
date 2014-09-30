@@ -46,11 +46,11 @@ pub enum TokenTag {
 }
 
 impl TokenTag {
-    pub fn at<T: ToSpan>(&self, to_span: T) -> Token {
+    pub fn at<T>(&self, to_span: T) -> Token where T: ToSpan {
         Token::make(*self, *to_span.to_span())
     }
 
-    pub fn assert_at<T: ToSpan>(&self, maybe_to_span: Option<T>) -> Token {
+    pub fn assert_at<T>(&self, maybe_to_span: Option<T>) -> Token where T: ToSpan {
         self.at(maybe_to_span.expect(format!("You were quite certain you would see the token {}, but you got None.", self).as_slice()))
     }
 }
@@ -66,7 +66,7 @@ impl Token {
         Token {tag:tag, span: span}
     }
 
-    pub fn text<'t, TSource: SourceCodeProvider>(&self, code: &'t TSource) -> String {
+    pub fn text<'t, TSource>(&self, code: &'t TSource) -> String where TSource : SourceCodeProvider {
         format!("[{} {}]", self.tag, get_region(code, *self).to_string())
     }
 }
@@ -105,16 +105,15 @@ fn get_region<'x, TSource, TSpan>(source: &'x TSource, span: TSpan) -> &'x str w
 }
 
 pub trait FullSource {
-    fn get_slice<'x, TSpan: ToSpan, TSource: SourceCodeProvider>(&'x self, span: &TSpan) -> &'x str;
+    fn get_slice<'x, TSpan, TSource>(&'x self, span: &TSpan) -> &'x str where TSpan: ToSpan, TSource: SourceCodeProvider;
 }
 
-impl<'coolness, T: SourceCodeProvider> FullSource for &'coolness T {
-    fn get_slice<'x, TSpan: ToSpan, TSource: SourceCodeProvider>(&'x self, span: &TSpan) -> &'x str {
+impl<'coolness, T> FullSource for &'coolness T where T: SourceCodeProvider {
+    fn get_slice<'x, TSpan, TSource>(&'x self, span: &TSpan) -> &'x str where TSpan: ToSpan, TSource: SourceCodeProvider {
         let span = span.to_span();
         self.get_source_code().slice(span.start_pos.index, span.end_pos.index)
     }
 }
-
 
 impl<'li> Lexer<'li> {
 
