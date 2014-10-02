@@ -12,4 +12,3 @@ chomper_tests
 /what_if_magic_number_needed_lifetime
 Cargo.lock
 target/
-*.tokens

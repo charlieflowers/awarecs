@@ -1,9 +1,4 @@
-# case_files = Filelist['*.case']
-# rule ".tokens" => ".case" do |t|
-#   sh "coffee --tokens #{t.source} > #{t.name}"
-# end
-
-case_files = FileList['*.case', '*.coffee']
+case_files = FileList['unbuilt/cases/*.case', 'unbuilt/cases/*.coffee']
 
 task :showlist do
   puts case_files.ext(".tokens")
