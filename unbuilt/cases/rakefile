@@ -3,7 +3,7 @@
 #   sh "coffee --tokens #{t.source} > #{t.name}"
 # end
 
-case_files = FileList['*.case']
+case_files = FileList['*.case', '*.coffee']
 
 task :showlist do
   puts case_files.ext(".tokens")
@@ -14,5 +14,9 @@ task :default => :tokens
 task :tokens => case_files.ext(".tokens")
 
 rule ".tokens" => ".case" do |t|
+  sh "coffee --tokens #{t.source} > #{t.name}"
+end
+
+rule ".tokens" => ".coffee" do |t|
   sh "coffee --tokens #{t.source} > #{t.name}"
 end
