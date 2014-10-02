@@ -1,0 +1,18 @@
+# case_files = Filelist['*.case']
+# rule ".tokens" => ".case" do |t|
+#   sh "coffee --tokens #{t.source} > #{t.name}"
+# end
+
+case_files = FileList['*.case']
+
+task :showlist do
+  puts case_files.ext(".tokens")
+end
+
+task :default => :tokens
+
+task :tokens => case_files.ext(".tokens")
+
+rule ".tokens" => ".case" do |t|
+  sh "coffee --tokens #{t.source} > #{t.name}"
+end
