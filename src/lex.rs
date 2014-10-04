@@ -190,7 +190,7 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn get_whitespace(&mut self) -> Token { // todo, ONLY pub so you can test it, fix that later
-        Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace()))
+        Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace() || ch == '\n'))
             // todo the wrong thing here is that the token Whitespace and the fn (|ch| ! ch.is_whitespace()) truly belong together. I'm repeating myself by saying that twice in this call
             // The answer is not necessarily the OO answer ... bundle it into the struct. Anything that associates the TokenTag with the scan fn makes sense, so think outside the oo box.
     }
@@ -441,5 +441,21 @@ runs straight to EOF."#;
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
         assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]", "[NewlineAndIndent \n       ]", "[NewlineAndIndent \n   ]", "[Number 12]"]);
+    }
+
+    #[test]
+    fn should_not_include_newline_in_whitespace() {
+        let code = "     \n   ";
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Whitespace      ]", "[NewlineAndIndent \n   ]"]);
+    }
+
+    #[test]
+    fn should_give_newline_higher_precedence_than_whitespace() {
+        let code = "\n";
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[NewlineAndIndent \n]"]);
     }
 }
