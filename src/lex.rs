@@ -317,9 +317,16 @@ mod test {
     }
 
     #[test]
+    fn should_be_able_to_lex_even_if_newline_is_last_thing_before_eof() {
+        let code = "\n";
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[NewlineAndIndent \n]"]);
+    }
+
+    #[test]
     fn formula_with_no_spaces_should_succeed() {
-        let code = r#"40+2
-"#;
+        let code = "40+2\n";
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
         dump_tokens_to_console(lexer, &tokens);

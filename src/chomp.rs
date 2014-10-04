@@ -2,6 +2,7 @@ pub use std::str::{Chars};
 pub use std::iter::{Enumerate};
 
 #[deriving(Show)]
+#[deriving(PartialEq)]
 pub struct ChompResult {
     pub hit_eof: bool,
     pub span: Span
@@ -151,7 +152,9 @@ impl<'ci> Chomper<'ci> {
     }
 
     fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult> {
-        self.assert_not_eof();
+        // What if chomper did not blow up on eof, but merely kept returning None? Of course, his flag will still say hitEof=true.
+        // self.assert_not_eof();
+        if self.is_eof  { return None; }
 
         let mut start_position: Option<Position> = None;
         let mut end_position: Option<Position> = None;
@@ -270,7 +273,6 @@ chomp it until 42, which is the first digit."#;
     }
 
     #[test]
-    #[should_fail]
     fn chomp_should_return_none_if_youre_already_at_eof_when_you_call_it() {
         let code = "40";
         let mut chomper = Chomper::new(code);
@@ -280,7 +282,8 @@ chomp it until 42, which is the first digit."#;
         let result = chomper_borrow.chomp (|_| { false}).unwrap();
         assert_eq!(chomper_borrow.value(result), "40");
 
-        chomper_borrow.chomp(|_| { false });
+        let past_eof_cr = chomper_borrow.chomp(|_| { false });
+        assert_eq!(past_eof_cr, None);
     }
 
     #[test]
