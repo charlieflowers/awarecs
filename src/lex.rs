@@ -39,6 +39,7 @@ pub enum TokenTag {
     Herecomment,
     Comment,
     Word,
+    NewlineAndIndent,
 }
 
 impl TokenTag {
@@ -127,6 +128,7 @@ impl<'li> Lexer<'li> {
                 Some(c) => {
                     let token = match c {
                         ch if Lexer::is_valid_first_char_of_word(ch) => self.get_word(),
+                        '\n' => self.process_newline(),
                         ws if ws.is_whitespace() => self.get_whitespace(),
                         num if num.is_digit() => self.get_number(),
                         '+' | '-' => self.get_operator(),
@@ -191,6 +193,14 @@ impl<'li> Lexer<'li> {
         Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace()))
             // todo the wrong thing here is that the token Whitespace and the fn (|ch| ! ch.is_whitespace()) truly belong together. I'm repeating myself by saying that twice in this call
             // The answer is not necessarily the OO answer ... bundle it into the struct. Anything that associates the TokenTag with the scan fn makes sense, so think outside the oo box.
+    }
+
+    pub fn process_newline(&mut self) -> Token {
+        // Number.assert_at(self.chomper.chomp(|c| ! c.is_digit()))
+
+        let first_newline = self.chomper.expect("\n");
+        let indentation = self.chomper.chomp(|c| c == '\n' || ! c.is_whitespace());
+        NewlineAndIndent.at(first_newline + indentation)
     }
 
     pub fn get_number(&mut self) -> Token {
@@ -375,7 +385,7 @@ runs straight to EOF."#;
 
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
+        assert_tokens_match(&lexer, &tokens, vec!["[NewlineAndIndent \n]", "[Number 40]", "[Whitespace  ]",
                                                "[Herecomment ### This whole thing right here is a\nherecomment that\nruns straight to EOF.]"]);
     }
 
@@ -410,5 +420,15 @@ runs straight to EOF."#;
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
         assert_tokens_match(&lexer, &tokens, vec!["[Word someWord]", "[Whitespace  ]", "[Number 42]"]);
+    }
+
+    #[test]
+    fn should_deal_with_newlines_correctly_for_my_pass_one() {
+        let code = r#"40+2
+
+   12"#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]", "[NewlineAndIndent \n       ]", "[NewlineAndIndent \n   ]"]);
     }
 }
