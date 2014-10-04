@@ -196,11 +196,7 @@ impl<'li> Lexer<'li> {
     }
 
     pub fn process_newline(&mut self) -> Token {
-        // Number.assert_at(self.chomper.chomp(|c| ! c.is_digit()))
-
-        let first_newline = self.chomper.expect("\n");
-        let indentation = self.chomper.chomp(|c| c == '\n' || ! c.is_whitespace());
-        NewlineAndIndent.at(first_newline + indentation)
+        NewlineAndIndent.at(self.chomper.expect("\n") + self.chomper.chomp(|c| c == '\n' || ! c.is_whitespace()))
     }
 
     pub fn get_number(&mut self) -> Token {
@@ -314,7 +310,6 @@ mod test {
         let mut actualIter = actualTokens.iter();
         for expect in expectations.iter() {
             let token = actualIter.idx(index).unwrap();
-            // let token_text = format!("[{} {}]", token.tag, get_region(code, *token).to_string());
             let token_text = token.text(code);
             assert_eq!(token_text, expect.to_string());
             index = index + 1;
@@ -328,7 +323,7 @@ mod test {
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
         dump_tokens_to_console(lexer, &tokens);
-        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]"]);
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]", "[NewlineAndIndent \n]"]);
     }
 
     #[test]
@@ -356,9 +351,9 @@ mod test {
 
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Whitespace \n]",
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[NewlineAndIndent \n]",
                                                "[Comment # This is a comment]",
-                                               "[Whitespace \n]", "[Number 2]",
+                                               "[NewlineAndIndent \n]", "[Number 2]",
                                                "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 40]"]);
     }
 
@@ -372,7 +367,7 @@ the proper ending delimiter is encountered. ###"#;
 
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[Whitespace \n]", "[Number 40]", "[Whitespace  ]",
+        assert_tokens_match(&lexer, &tokens, vec!["[NewlineAndIndent \n]", "[Number 40]", "[Whitespace  ]",
                                                "[Herecomment ### This whole thing right here is a\nherecomment that can span\nmany lines. A # in the middle is no problem. It won't end until\nthe proper ending delimiter is encountered. ###]"]);
     }
 
@@ -423,12 +418,21 @@ runs straight to EOF."#;
     }
 
     #[test]
-    fn should_deal_with_newlines_correctly_for_my_pass_one() {
-        let code = r#"40+2
+    fn should_move_past_matched_text_when_calling_expect() {
+        let code = r#"
+123456789"#;
+        let mut lexer = get_lexer(code);
 
-   12"#;
+        let cr = lexer.chomper.expect("\n");
+        assert_eq!(Some('1'), lexer.chomper.peek());
+        assert_eq!("123456789", lexer.chomper.text());
+    }
+
+    #[test]
+    fn should_deal_with_newlines_correctly_for_my_pass_one() {
+        let code = "40+2\n       \n   12";
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]", "[NewlineAndIndent \n       ]", "[NewlineAndIndent \n   ]"]);
+        assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Operator +]", "[Number 2]", "[NewlineAndIndent \n       ]", "[NewlineAndIndent \n   ]", "[Number 12]"]);
     }
 }
