@@ -1,0 +1,1 @@
+[( (] [STRING "The string is "] [+ +] [( (] [( (] [STRING "The "] [+ +] [( (] [NUMBER 40] [+ +] [NUMBER 2] [) )] [+ +] [STRING " string"] [) )] [. .] [IDENTIFIER length] [) )] [+ +] [STRING " characters long"] [) )] [TERMINATOR \n]

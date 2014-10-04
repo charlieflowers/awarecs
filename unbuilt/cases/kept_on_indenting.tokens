@@ -1,1 +1,23 @@
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+Branch 2: indentation is not kept same
+Branch 5: size is not > @indent, and size is not < @baseIndent. Make an OUTDENT token
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
 [NUMBER 42] [+ +] [NUMBER 3] [INDENT 19] [IDENTIFIER crazy] [INDENT 15] [IDENTIFIER stuff] [INDENT 30] [IDENTIFIER going] [CALL_START (] [IDENTIFIER down] [CALL_END )] [OUTDENT 8] [TERMINATOR \n] [IDENTIFIER even] [CALL_START (] [IDENTIFIER a] [CALL_START (] [IDENTIFIER little] [CALL_START (] [IDENTIFIER outdenting] [CALL_END )] [CALL_END )] [CALL_END )] [INDENT 50] [IDENTIFIER but] [CALL_START (] [IDENTIFIER never] [CALL_START (] [IDENTIFIER enough] [CALL_END )] [CALL_END )] [INDENT 5] [THIS this] [CALL_START (] [IDENTIFIER reads] [CALL_START (] [IDENTIFIER like] [CALL_START (] [IDENTIFIER some] [CALL_START (] [IDENTIFIER strange] [CALL_START (] [IDENTIFIER haiku] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [OUTDENT 89] [OUTDENT 84] [OUTDENT 34] [OUTDENT 19] [TERMINATOR \n]

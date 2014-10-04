@@ -458,4 +458,14 @@ runs straight to EOF."#;
         let tokens = lexer.lex();
         assert_tokens_match(&lexer, &tokens, vec!["[NewlineAndIndent \n]"]);
     }
+
+    #[test]
+    fn should_lex_strings_with_interpolation_using_all_charlies_awesome_goodness() {
+        let code = r#""The string is #{"The string".length} characters long""#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string is]", "[OpenInterpolation #{]", "[OpenQuote \"]",
+                            "[StringFragment The string]", "[CloseQuote \"]", "[InterpolatedCode .length]", "[CloseInterpolation }]", "[StringFragment  characters long]",
+                            "[CloseQuote \"]"]);
+    }
 }

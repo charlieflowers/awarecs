@@ -1,0 +1,5 @@
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+[NUMBER 40] [INDENT 2] [NUMBER 50] [OUTDENT 2] [TERMINATOR \n]

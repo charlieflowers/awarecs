@@ -1,1 +1,13 @@
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.4: there are some tokens already, so make an INDENT token
 [NUMBER 42] [+ +] [NUMBER 3] [INDENT 3] [IDENTIFIER someIdentifier] [= =] [NUMBER 42] [INDENT 3] [IDENTIFIER moreIndented] [= =] [NUMBER 42] [INDENT 2] [NUMBER 2] [NUMBER 3] [NUMBER 4] [NUMBER 5] [NUMBER 6] [NUMBER 7] [NUMBER 8] [NUMBER 9] [OUTDENT 8] [OUTDENT 6] [OUTDENT 3] [TERMINATOR \n]

@@ -9,9 +9,9 @@ task :default => :tokens
 task :tokens => case_files.ext(".tokens")
 
 rule ".tokens" => ".case" do |t|
-  sh "coffee --tokens #{t.source} > #{t.name}"
+  sh "coffee --tokens #{t.source} > #{t.name}; true"
 end
 
 rule ".tokens" => ".coffee" do |t|
-  sh "coffee --tokens #{t.source} > #{t.name}"
+  sh "coffee --tokens #{t.source} > #{t.name}; true"
 end

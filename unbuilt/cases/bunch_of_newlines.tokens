@@ -1,1 +1,5 @@
+Branch 1: size - @indebt is @indent, indentation was kept same
+Branch 1.2: newNoewLines is false, so just return
+Branch 1: size - @indebt is @indent, indentation was kept same
+Branch 1.2: newNoewLines is false, so just return
 [NUMBER 42] [+ +] [NUMBER 2] [TERMINATOR \n] [IDENTIFIER hello] [TERMINATOR \n] [IDENTIFIER world] [TERMINATOR \n]

@@ -1,0 +1,5 @@
+Branch 1: size - @indebt is @indent, indentation was kept same
+Branch 1.1: noNewLines is true, so suppressNewLines
+Branch 2: indentation is not kept same
+Branch 5: size is not > @indent, and size is not < @baseIndent. Make an OUTDENT token
+[NUMBER 42] [+ +] [NUMBER 2] [TERMINATOR \n]

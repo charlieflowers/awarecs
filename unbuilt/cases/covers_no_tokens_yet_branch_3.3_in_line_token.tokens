@@ -1,0 +1,5 @@
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.3: there are not any tokens yet, so set base indent and don't return any token
+[IDENTIFIER there] [CALL_START (] [IDENTIFIER were] [CALL_START (] [BOOL false] [IDENTIFIER tokens] [CALL_START (] [IDENTIFIER yet] [LOGIC &&] [IDENTIFIER you] [CALL_START (] [IDENTIFIER did] [CALL_START (] [IDENTIFIER newline] [LOGIC &&] [IDENTIFIER indent] [. .] [IDENTIFIER that] [CALL_START (] [IDENTIFIER covers] [CALL_START (] [IDENTIFIER branch] [CALL_START (] [NUMBER 3.3] [. .] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [CALL_END )] [TERMINATOR \n]

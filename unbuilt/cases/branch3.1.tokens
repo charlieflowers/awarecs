@@ -1,0 +1,4 @@
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.1: noNewLines is true, so suppressNewLines
+[NUMBER 40] [+ +] [NUMBER 50] [TERMINATOR \n]

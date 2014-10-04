@@ -1,0 +1,1 @@
+[( (] [STRING "hi: "] [+ +] [( (] [( (] [STRING "there: "] [+ +] [( (] [( (] [STRING "you: "] [+ +] [( (] [( (] [STRING "fool: "] [+ +] [NUMBER 1] [) )] [) )] [) )] [) )] [+ +] [STRING " "] [) )] [) )] [) )] [TERMINATOR \n]

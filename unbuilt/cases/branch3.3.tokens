@@ -1,0 +1,5 @@
+Branch 2: indentation is not kept same
+Branch 3: size of new indent is > previous indent, we've indented further
+Branch 3.2: noNewLines is false
+Branch 3.3: there are not any tokens yet, so set base indent and don't return any token
+[NUMBER 42] [TERMINATOR \n]
