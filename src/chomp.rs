@@ -178,7 +178,7 @@ impl<'ci> Chomper<'ci> {
                         end_position = Some(self.position());
                         true
                     } else {
-                        println!("Not time to quit yet!");
+                        println!("Not time to quit yet! Char is: {}", ch);
                         if start_position == None {
                             println!("setting start index for chomp at {}", self.index);
                             start_position = Some(self.position());

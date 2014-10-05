@@ -161,21 +161,23 @@ impl<'li> Lexer<'li> {
         return None;
 
         fn inside_open_quote(lexer: &mut Lexer, token_list: &mut Vec<Token>) {
-            let open_quote_cr = lexer.chomper.expect('\"');
+            let open_quote_cr = lexer.chomper.expect("\"");
             token_list.push(OpenQuote.at(open_quote_cr));
-            let mut string_fragment : string = "";
 
-            let string_frag_cr = lexer.chomper.chomp_till_str(|s| s == "\"" || s == "#{");
-            if string_frag_cr.is_some() { token_list.push(StringFragment.at(string_frag_cr)); }
+            loop {
+                let string_frag_cr = lexer.chomper.chomp_till_str(|s| s.starts_with("\"") || s.starts_with("#{"));
+                if lexer.chomper.is_eof { fail!("Hit eof while parsing an interpolated string.")}
+                if string_frag_cr.is_some() { token_list.push(StringFragment.at(string_frag_cr.unwrap())); }
 
-            match(lexer.chomper.text()) {
-                '\"' => {
-                    token_list.push(CloseQuote.at(self.chomper.expect('\"')));
-                    return;
-                },
-                "#{" => inside_open_interpolation(),
-                _ => unreachable!()
-            };
+                match(lexer.chomper.text().slice_to(2)) {
+                    "\"" => {
+                        token_list.push(CloseQuote.at(lexer.chomper.expect("\"")));
+                        return;
+                    },
+                    "#{" => inside_open_interpolation(),
+                    _ => unreachable!()
+                };
+            }
         }
 
         fn inside_open_interpolation() {
