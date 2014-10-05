@@ -169,22 +169,36 @@ impl<'li> Lexer<'li> {
                 if lexer.chomper.is_eof { fail!("Hit eof while parsing an interpolated string.")}
                 if string_frag_cr.is_some() { token_list.push(StringFragment.at(string_frag_cr.unwrap())); }
 
-                match(lexer.chomper.text().slice_to(2)) {
-                    "\"" => {
+                match(lexer.chomper.peek().unwrap()) {
+                    '\"' => {
                         token_list.push(CloseQuote.at(lexer.chomper.expect("\"")));
                         return;
                     },
-                    "#{" => inside_open_interpolation(),
-                    _ => unreachable!()
+                    '#' => inside_open_interpolation(lexer, token_list),
+                    unexpected_str => fail!("Got unexpected char: {}", unexpected_str),
                 };
             }
         }
 
-        fn inside_open_interpolation() {
-            fail!("not implemented yet");
-        }
+        fn inside_open_interpolation(lexer: &mut Lexer, token_list: &mut Vec<Token>) {
+            let open_cr = lexer.chomper.expect("#{");
+            token_list.push(OpenInterpolation.at(open_cr));
 
-        None
+            loop {
+                let code_frag_cr = lexer.chomper.chomp(|c| c == '}' || c == '\"');
+                if lexer.chomper.is_eof { fail!("Hit eof while parsing some interpolation code inside an interpolated string.")}
+                if code_frag_cr.is_some() { token_list.push(InterpolatedCode.at(code_frag_cr.unwrap())); }
+
+                match(lexer.chomper.peek().unwrap()) {
+                    '}' => {
+                       token_list.push(CloseInterpolation.at(lexer.chomper.expect("}")));
+                       return;
+                     },
+                    '\"' => inside_open_quote(lexer, token_list),
+                    _ => unreachable!()
+                };
+            }
+        }
     }
 
     pub fn get_word(&mut self) -> Option<Token> {
@@ -503,7 +517,7 @@ runs straight to EOF."#;
         let code = r#""The string is #{"The string".length} characters long""#;
         let mut lexer = get_lexer(code);
         let tokens = lexer.lex();
-        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string is]", "[OpenInterpolation #{]", "[OpenQuote \"]",
+        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string is ]", "[OpenInterpolation #{]", "[OpenQuote \"]",
                             "[StringFragment The string]", "[CloseQuote \"]", "[InterpolatedCode .length]", "[CloseInterpolation }]", "[StringFragment  characters long]",
                             "[CloseQuote \"]"]);
     }
