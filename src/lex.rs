@@ -40,6 +40,12 @@ pub enum TokenTag {
     Comment,
     Word,
     NewlineAndIndent,
+    OpenQuote,
+    StringFragment,
+    OpenInterpolation,
+    InterpolatedCode,
+    CloseInterpolation,
+    CloseQuote,
 }
 
 impl TokenTag {
@@ -129,7 +135,7 @@ impl<'li> Lexer<'li> {
                     let token = match c {
                         ch if Lexer::is_valid_first_char_of_word(ch) => self.get_word(),
                         '\n' => self.process_newline(),
-                        '\"' => self.process_double_quote(),
+                        '\"' => self.process_double_quote(&mut tokens),
                         ws if ws.is_whitespace() => self.get_whitespace(),
                         num if num.is_digit() => self.get_number(),
                         '+' | '-' => self.get_operator(),
@@ -149,8 +155,32 @@ impl<'li> Lexer<'li> {
         tokens
     }
 
-    pub fn process_double_quote(&mut self) -> Option<Token> {
-        self.chomper.chomp_count(1);
+    pub fn process_double_quote(&mut self, token_list: &mut Vec<Token>) -> Option<Token> {
+
+        inside_open_quote(self, token_list);
+        return None;
+
+        fn inside_open_quote(lexer: &mut Lexer, token_list: &mut Vec<Token>) {
+            let open_quote_cr = lexer.chomper.expect('\"');
+            token_list.push(OpenQuote.at(open_quote_cr));
+            let mut string_fragment : string = "";
+
+            let string_frag_cr = lexer.chomper.chomp_till_str(|s| s == "\"" || s == "#{");
+            if string_frag_cr.is_some() { token_list.push(StringFragment.at(string_frag_cr)); }
+
+            match(lexer.chomper.text()) {
+                '\"' => {
+                    token_list.push(CloseQuote.at(self.chomper.expect('\"')));
+                    return;
+                },
+                "#{" => inside_open_interpolation(),
+                _ => unreachable!()
+            };
+        }
+
+        fn inside_open_interpolation() {
+            fail!("not implemented yet");
+        }
 
         None
     }
