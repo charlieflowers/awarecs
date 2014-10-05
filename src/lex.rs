@@ -169,7 +169,7 @@ impl<'li> Lexer<'li> {
                 if lexer.chomper.is_eof { fail!("Hit eof while parsing an interpolated string.")}
                 if string_frag_cr.is_some() { token_list.push(StringFragment.at(string_frag_cr.unwrap())); }
 
-                match(lexer.chomper.peek().unwrap()) {
+                match lexer.chomper.peek().unwrap() {
                     '\"' => {
                         token_list.push(CloseQuote.at(lexer.chomper.expect("\"")));
                         return;
@@ -189,7 +189,7 @@ impl<'li> Lexer<'li> {
                 if lexer.chomper.is_eof { fail!("Hit eof while parsing some interpolation code inside an interpolated string.")}
                 if code_frag_cr.is_some() { token_list.push(InterpolatedCode.at(code_frag_cr.unwrap())); }
 
-                match(lexer.chomper.peek().unwrap()) {
+                match lexer.chomper.peek().unwrap() {
                     '}' => {
                        token_list.push(CloseInterpolation.at(lexer.chomper.expect("}")));
                        return;
@@ -519,6 +519,32 @@ runs straight to EOF."#;
         let tokens = lexer.lex();
         assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string is ]", "[OpenInterpolation #{]", "[OpenQuote \"]",
                             "[StringFragment The string]", "[CloseQuote \"]", "[InterpolatedCode .length]", "[CloseInterpolation }]", "[StringFragment  characters long]",
+                            "[CloseQuote \"]"]); // THIS WAS FUN!!
+    }
+
+    #[test]
+    fn should_kick_the_same_ass_on_a_nested_interpolated_string_too() {
+        let code = r#""The string is #{"The #{40 + 2}nd string".length} characters long""#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string is ]", "[OpenInterpolation #{]",
+            "[OpenQuote \"]", "[StringFragment The ]", "[OpenInterpolation #{]", "[InterpolatedCode 40 + 2]",
+                                                  "[CloseInterpolation }]", "[StringFragment nd string]", "[CloseQuote \"]", "[InterpolatedCode .length]",
+                            "[CloseInterpolation }]", "[StringFragment  characters long]",
                             "[CloseQuote \"]"]);
+    }
+
+    #[test]
+    fn should_respect_escaped_quotes_in_interpolated_strings() {
+        fail!("not implemented yet");
+    }
+
+    #[test]
+    fn should_respect_brackets_as_literals_in_interpolated_strings_when_they_dont_close_an_interpolation() {
+        let code = r#""This } string #{40 + 2} has 2 } that are merely literal brackets""#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment This } string ]", "[OpenInterpolation #{]", "[InterpolatedCode 40 + 2]",
+                                                  "[CloseInterpolation }]", "[StringFragment  has 2 } that are merely literal brackets]", "[CloseQuote \"]"]);
     }
 }
