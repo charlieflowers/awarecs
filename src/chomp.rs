@@ -144,18 +144,23 @@ impl<'ci> Chomper<'ci> {
     }
 
     pub fn chomp_till_str(&mut self, quit: |&str| -> bool) -> Option<ChompResult> {
-        self.chomp_internal(|_| false, quit)
+        self.chomp_internal(|_, __| false, |str, _| quit(str))
     }
 
     pub fn chomp(&mut self, quit: |char| -> bool) -> Option<ChompResult> {
-        self.chomp_internal(quit, |_| false)
+        self.chomp_internal(|c, _| quit(c), |_, __| false)
     }
 
-    fn chomp_internal(&mut self, char_quit: |char| -> bool, str_quit: |&str| -> bool) -> Option<ChompResult> {
+    pub fn chomp_and_see_two(&mut self, quit: |char, Option<char>| -> bool) -> Option<ChompResult> {
+        self.chomp_internal(quit, |_, __| false)
+    }
+
+    fn chomp_internal(&mut self, char_quit: |char, Option<char>| -> bool, str_quit: |&str, Option<char>| -> bool) -> Option<ChompResult> {
         // What if chomper did not blow up on eof, but merely kept returning None? Of course, his flag will still say hitEof=true.
         // self.assert_not_eof();
         if self.is_eof  { return None; }
 
+        let mut prev_char: Option<char> = None; // Be able to send the previous char to the quit fn.
         let mut start_position: Option<Position> = None;
         let mut end_position: Option<Position> = None;
 
@@ -174,11 +179,12 @@ impl<'ci> Chomper<'ci> {
                     true
                 },
                 Some(ch) => {
-                    if char_quit(ch) || str_quit(self.text()) {
+                    if char_quit(ch, prev_char) || str_quit(self.text(), prev_char) {
                         end_position = Some(self.position());
                         true
                     } else {
                         println!("Not time to quit yet! Char is: {}", ch);
+                        prev_char = Some(ch);
                         if start_position == None {
                             println!("setting start index for chomp at {}", self.index);
                             start_position = Some(self.position());
@@ -284,6 +290,14 @@ chomp it until 42, which is the first digit."#;
 
         let past_eof_cr = chomper_borrow.chomp(|_| { false });
         assert_eq!(past_eof_cr, None);
+    }
+
+    #[test]
+    fn chomp_and_see_two_should_work() {
+        let code = "1234567890thenAnother5EXTRATEXT";
+        let mut chomper = Chomper::new(code);
+        let result = chomper.chomp_and_see_two(|c, prev| c == '5' && prev != Some('4')).unwrap();
+        assert_eq!(chomper.value(result), "1234567890thenAnother")
     }
 
     #[test]
