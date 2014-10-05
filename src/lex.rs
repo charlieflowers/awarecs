@@ -164,8 +164,11 @@ impl<'li> Lexer<'li> {
             let open_quote_cr = lexer.chomper.expect("\"");
             token_list.push(OpenQuote.at(open_quote_cr));
 
+            // todo charlie, clearly there is duplication here too! Come back to it down the road.
+
             loop {
-                let string_frag_cr = lexer.chomper.chomp_till_str(|s| s.starts_with("\"") || s.starts_with("#{"));
+                // let string_frag_cr = lexer.chomper.chomp_till_str(|s| s.starts_with("\"") || s.starts_with("#{"));
+                let string_frag_cr = lexer.chomper.chomp_till_str_with_previous(|str, pc| (str.starts_with("\"") && pc != Some('\\')) || str.starts_with("#{"));
                 if lexer.chomper.is_eof { fail!("Hit eof while parsing an interpolated string.")}
                 if string_frag_cr.is_some() { token_list.push(StringFragment.at(string_frag_cr.unwrap())); }
 
@@ -535,8 +538,23 @@ runs straight to EOF."#;
     }
 
     #[test]
-    fn should_respect_escaped_quotes_in_interpolated_strings() {
-        fail!("not implemented yet");
+    fn should_respect_escaped_quotes_in_non_interpolated_part_of_interpolated_strings() {
+        let code = r#""The string \" is #{"The string".length} characters long""#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string \\\" is ]", "[OpenInterpolation #{]", "[OpenQuote \"]",
+                            "[StringFragment The string]", "[CloseQuote \"]", "[InterpolatedCode .length]", "[CloseInterpolation }]", "[StringFragment  characters long]",
+                            "[CloseQuote \"]"]);
+    }
+
+    #[test]
+    fn should_respect_escaped_quotes_in_interpolated_part_of_interpolated_strings() {
+        let code = r#""The string is #{"The \"string".length} characters long""#;
+        let mut lexer = get_lexer(code);
+        let tokens = lexer.lex();
+        assert_tokens_match(&lexer, &tokens, vec!["[OpenQuote \"]", "[StringFragment The string is ]", "[OpenInterpolation #{]", "[OpenQuote \"]",
+                                                  "[StringFragment The \\\"string]", "[CloseQuote \"]", "[InterpolatedCode .length]",
+                                                  "[CloseInterpolation }]", "[StringFragment  characters long]", "[CloseQuote \"]"]);
     }
 
     #[test]

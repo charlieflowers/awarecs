@@ -147,11 +147,15 @@ impl<'ci> Chomper<'ci> {
         self.chomp_internal(|_, __| false, |str, _| quit(str))
     }
 
+    pub fn chomp_till_str_with_previous(&mut self, quit: |&str, Option<char>| -> bool) -> Option<ChompResult> {
+        self.chomp_internal(|_, __| false, quit)
+    }
+
     pub fn chomp(&mut self, quit: |char| -> bool) -> Option<ChompResult> {
         self.chomp_internal(|c, _| quit(c), |_, __| false)
     }
 
-    pub fn chomp_and_see_two(&mut self, quit: |char, Option<char>| -> bool) -> Option<ChompResult> {
+    pub fn chomp_and_see_previous(&mut self, quit: |char, Option<char>| -> bool) -> Option<ChompResult> {
         self.chomp_internal(quit, |_, __| false)
     }
 
@@ -293,10 +297,18 @@ chomp it until 42, which is the first digit."#;
     }
 
     #[test]
-    fn chomp_and_see_two_should_work() {
+    fn chomp_and_see_previous_should_work() {
         let code = "1234567890thenAnother5EXTRATEXT";
         let mut chomper = Chomper::new(code);
-        let result = chomper.chomp_and_see_two(|c, prev| c == '5' && prev != Some('4')).unwrap();
+        let result = chomper.chomp_and_see_previous(|c, prev| c == '5' && prev != Some('4')).unwrap();
+        assert_eq!(chomper.value(result), "1234567890thenAnother")
+    }
+
+    #[test]
+    fn chomp_till_str_with_previous() {
+        let code = "1234567890thenAnother5EXTRATEXT";
+        let mut chomper = Chomper::new(code);
+        let result = chomper.chomp_till_str_with_previous(|str, pc| str.starts_with("5") && pc != Some('4')).unwrap();
         assert_eq!(chomper.value(result), "1234567890thenAnother")
     }
 
