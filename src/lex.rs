@@ -129,6 +129,7 @@ impl<'li> Lexer<'li> {
                     let token = match c {
                         ch if Lexer::is_valid_first_char_of_word(ch) => self.get_word(),
                         '\n' => self.process_newline(),
+                        '\"' => self.process_double_quote(),
                         ws if ws.is_whitespace() => self.get_whitespace(),
                         num if num.is_digit() => self.get_number(),
                         '+' | '-' => self.get_operator(),
@@ -140,7 +141,7 @@ impl<'li> Lexer<'li> {
                     println!("Chomper peek char is {}", self.chomper.peek());
                     println!("At this point, index is {}", self.chomper.index);
 
-                    tokens.push(token);
+                    if token.is_some() {tokens.push(token.unwrap())};
                 }
             }
         }
@@ -148,7 +149,13 @@ impl<'li> Lexer<'li> {
         tokens
     }
 
-    pub fn get_word(&mut self) -> Token {
+    pub fn process_double_quote(&mut self) -> Option<Token> {
+        self.chomper.chomp_count(1);
+
+        None
+    }
+
+    pub fn get_word(&mut self) -> Option<Token> {
         fn fail(msg : String) {
             fail!("You called get_word, but the next char {}", msg);
         }
@@ -165,7 +172,7 @@ impl<'li> Lexer<'li> {
         let rest = self.chomper.chomp(|c| { ! Lexer::is_valid_subsequent_char_of_word(c) });
         let span = (first + rest).span;
 
-        Word.at(span)
+        Some(Word.at(span))
     }
 
     fn is_valid_first_char_of_word(ch: char) -> bool {
@@ -189,25 +196,25 @@ impl<'li> Lexer<'li> {
         }
     }
 
-    pub fn get_whitespace(&mut self) -> Token { // todo, ONLY pub so you can test it, fix that later
-        Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace() || ch == '\n'))
+    pub fn get_whitespace(&mut self) -> Option<Token> { // todo, ONLY pub so you can test it, fix that later
+        Some(Whitespace.assert_at(self.chomper.chomp(|ch| ! ch.is_whitespace() || ch == '\n')))
             // todo the wrong thing here is that the token Whitespace and the fn (|ch| ! ch.is_whitespace()) truly belong together. I'm repeating myself by saying that twice in this call
             // The answer is not necessarily the OO answer ... bundle it into the struct. Anything that associates the TokenTag with the scan fn makes sense, so think outside the oo box.
     }
 
-    pub fn process_newline(&mut self) -> Token {
-        NewlineAndIndent.at(self.chomper.expect("\n") + self.chomper.chomp(|c| c == '\n' || ! c.is_whitespace()))
+    pub fn process_newline(&mut self) -> Option<Token> {
+        Some(NewlineAndIndent.at(self.chomper.expect("\n") + self.chomper.chomp(|c| c == '\n' || ! c.is_whitespace())))
     }
 
-    pub fn get_number(&mut self) -> Token {
-        Number.assert_at(self.chomper.chomp(|c| ! c.is_digit()))
+    pub fn get_number(&mut self) -> Option<Token> {
+        Some(Number.assert_at(self.chomper.chomp(|c| ! c.is_digit())))
     }
 
-    pub fn get_operator(&mut self) -> Token {
-        Operator.assert_at(self.chomper.chomp(|c| c != '+' && c != '-'))
+    pub fn get_operator(&mut self) -> Option<Token> {
+        Some(Operator.assert_at(self.chomper.chomp(|c| c != '+' && c != '-')))
     }
 
-    pub fn get_comment(&mut self) -> Token {
+    pub fn get_comment(&mut self) -> Option<Token> {
         // todo next line can be nicer
         if self.chomper.peek() != Some('#') { fail!("I thought I was parsing a comment, but it starts with this: {}", self.chomper.peek())}
         println!("seeing if we have herecomment");
@@ -218,14 +225,14 @@ impl<'li> Lexer<'li> {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
                 crf!(self.chomper.text());
-                Comment.assert_at(self.chomper.chomp(|c| c == '\n'))
+                Some(Comment.assert_at(self.chomper.chomp(|c| c == '\n')))
             }
         }
     }
 
-    pub fn get_here_comment(&mut self) -> Token {
+    pub fn get_here_comment(&mut self) -> Option<Token> {
         let delimiter = self.chomper.expect("###");
-        if delimiter.hit_eof { return Herecomment.at(delimiter); }
+        if delimiter.hit_eof { return Some(Herecomment.at(delimiter)); }
         let mut cr = self.chomper.chomp_till_str(|str| str.starts_with("###")).unwrap();
         cr = delimiter + cr;
 
@@ -233,7 +240,7 @@ impl<'li> Lexer<'li> {
             cr = cr + self.chomper.expect("###");
         }
 
-        Herecomment.at(cr)
+        Some(Herecomment.at(cr))
     }
 }
 
