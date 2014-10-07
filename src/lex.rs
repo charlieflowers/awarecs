@@ -1,5 +1,4 @@
 use chomp::*;
-
 use collections::string::String;
 
 // mod chomp; // If some other crate tries to use lex, then this won't work! That crate will have to say "mod chomp;" and "mod lex;"
@@ -227,8 +226,8 @@ impl<'li> Lexer<'li> {
     fn is_valid_first_char_of_word(ch: char) -> bool {
         match ch  {
             '$' | '_' => true,
-            'A'..'Z' => true,
-            'a'..'z' => true,
+            'A'...'Z' => true,
+            'a'...'z' => true,
             _ => false
                 // todo intentionally only allowing identifiers and words to start with "normal" ascii chars for now. Later, add support
                 //   for higher ascii and unicode (/x7f - /uffff, as the reference coffeescript compiler does)
@@ -238,9 +237,9 @@ impl<'li> Lexer<'li> {
     fn is_valid_subsequent_char_of_word(ch: char) -> bool {
         match ch  {
             '$' | '_' => true,
-            'a'..'z' => true,
-            'A'..'Z' => true,
-            '0'..'9' => true,
+            'a'...'z' => true,
+            'A'...'Z' => true,
+            '0'...'9' => true,
             _ => false
         }
     }
@@ -273,7 +272,9 @@ impl<'li> Lexer<'li> {
             _ => {
                 println!("in get_comment, and decided it was NOT a herecomment.");
                 println!("text is: {}", self.chomper.text());
+                trace_macros!(true)
                 crf!(self.chomper.text());
+                trace_macros!(false)
                 Some(Comment.assert_at(self.chomper.chomp(|c| c == '\n')))
             }
         }
@@ -357,15 +358,15 @@ mod test {
         assert_tokens_match(&lexer, &tokens, vec!["[Number 40]", "[Whitespace  ]", "[Operator +]", "[Whitespace  ]", "[Number 2]"]);
     }
 
-    fn assert_tokens_match(code: &Lexer, actualTokens: &Vec<Token>, expectations: Vec<&'static str>) {
+    fn assert_tokens_match(code: &Lexer, actual_tokens: &Vec<Token>, expectations: Vec<&'static str>) {
         println!("Matching tokens: ");
         println!("   Expecting (length of {}): {}", expectations.len(), expectations);
-        println!("   Actual (length of {}): {}", actualTokens.len(), actualTokens);
+        println!("   Actual (length of {}): {}", actual_tokens.len(), actual_tokens);
 
         let mut index = 0;
-        let mut actualIter = actualTokens.iter();
+        let mut actual_iter = actual_tokens.iter();
         for expect in expectations.iter() {
-            let token = actualIter.idx(index).unwrap();
+            let token = actual_iter.idx(index).unwrap();
             let token_text = token.text(code);
             assert_eq!(token_text, expect.to_string());
             index = index + 1;
@@ -394,8 +395,8 @@ mod test {
     fn make_sure_assert_tokens_fails_when_it_should() {
         let code = "40+2";
         let mut lexer = get_lexer(code);
-        let myTokens = lexer.lex();
-        assert_tokens_match(&lexer, &myTokens, vec!["[WrongStuff +]"]);
+        let my_tokens = lexer.lex();
+        assert_tokens_match(&lexer, &my_tokens, vec!["[WrongStuff +]"]);
     }
 
     #[test]
@@ -486,7 +487,7 @@ runs straight to EOF."#;
 123456789"#;
         let mut lexer = get_lexer(code);
 
-        let cr = lexer.chomper.expect("\n");
+        lexer.chomper.expect("\n");
         assert_eq!(Some('1'), lexer.chomper.peek());
         assert_eq!("123456789", lexer.chomper.text());
     }
