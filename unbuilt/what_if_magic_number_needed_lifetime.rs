@@ -1,9 +1,9 @@
 // // This file demonstrates the overloading workaround when the root item needs a lifetime annotation.
 
-// #[deriving(Show)]
+// #[derive(Debug)]
 // pub struct MagicNumber<'m> {
 //     irrelevant_slice_that_needs_lifetime: &'m str,
-//     value: uint
+//     value: u64
 // }
 
 // // During this process, don't get confused. THERE MUST BE ONE AND ONLY ONE IMPLEMENTATION OF ADD!
@@ -53,23 +53,23 @@
 //     assert_eq!(22, ddd.some_number);
 // }
 
-// #[deriving(Show)]
+// #[derive(Debug)]
 // pub struct Foo {
-//     some_number: uint
+//     some_number: u64
 // }
 
 // trait Fooable {
-//     fn foo_it(&self, number: uint) -> Foo;
+//     fn foo_it(&self, number: u64) -> Foo;
 // }
 
-// impl Fooable for uint {
-//     fn foo_it(&self, number: uint) -> Foo {
+// impl Fooable for u64 {
+//     fn foo_it(&self, number: u64) -> Foo {
 //         Foo { some_number: *self * number }
 //     }
 // }
 
 // impl Fooable for char {
-//     fn foo_it<'xxx>(&'xxx self, number: uint) -> Foo<'xxx> {
+//     fn foo_it<'xxx>(&'xxx self, number: u64) -> Foo<'xxx> {
 //         Foo { some_number: if *self == 'c' { 22 } else { 100 } }
 //     }
 // }
@@ -78,27 +78,27 @@
 // 1. I added the slice to MagicNumber, and a line in main to print it out so we wouldn't get compiler warning.
 // 2. I got these compile errors:
 
-    // :10:59: 10:70 error: wrong number of lifetime parameters: expected 1 but found 0
-    // :10 impl<R: CanBeAddedToMagicNumber>  Add<R, MagicNumber> for MagicNumber {
-    //                                                               ^~~~~~~~~~~
-    // :10:42: 10:53 error: wrong number of lifetime parameters: expected 1 but found 0
-    // :10 impl<R: CanBeAddedToMagicNumber>  Add<R, MagicNumber> for MagicNumber {
-    //                                              ^~~~~~~~~~~
-    // :20:34: 20:45 error: wrong number of lifetime parameters: expected 1 but found 0
-    // :20 impl CanBeAddedToMagicNumber for MagicNumber {
-    //                                      ^~~~~~~~~~~
-    // :26:41: 26:52 error: wrong number of lifetime parameters: expected 1 but found 0
-    // :26 impl CanBeAddedToMagicNumber for Option<MagicNumber> {
-    //
-    // error: aborting due to 4 previous errors
+// :10:59: 10:70 error: wrong number of lifetime parameters: expected 1 but found 0
+// :10 impl<R: CanBeAddedToMagicNumber>  Add<R, MagicNumber> for MagicNumber {
+//                                                               ^~~~~~~~~~~
+// :10:42: 10:53 error: wrong number of lifetime parameters: expected 1 but found 0
+// :10 impl<R: CanBeAddedToMagicNumber>  Add<R, MagicNumber> for MagicNumber {
+//                                              ^~~~~~~~~~~
+// :20:34: 20:45 error: wrong number of lifetime parameters: expected 1 but found 0
+// :20 impl CanBeAddedToMagicNumber for MagicNumber {
+//                                      ^~~~~~~~~~~
+// :26:41: 26:52 error: wrong number of lifetime parameters: expected 1 but found 0
+// :26 impl CanBeAddedToMagicNumber for Option<MagicNumber> {
+//
+// error: aborting due to 4 previous errors
 
 // Note, this is NOT every place that MagicNumber is used as a type. For example, line 11 says the fn returns type MagicNumber, and
 //  that is not (yet at least) flagged as a compiler error.
 
 // 3. So let's make these 4 errors happy, IN ORDER.
 //     a. Addressing 1st error on line 10, after "for". I put lifetime 'a there, but then, compiler says:
-            // :10:71: 10:73 error: use of undeclared lifetime name `'a`
-            // :10 impl<R: CanBeAddedToMagicNumber>  Add<R, MagicNumber> for MagicNumber<'a> {
+// :10:71: 10:73 error: use of undeclared lifetime name `'a`
+// :10 impl<R: CanBeAddedToMagicNumber>  Add<R, MagicNumber> for MagicNumber<'a> {
 
 //        So, cannot put a lifetime there without "declaring" said lifetime. I believe this needs to go on the impl on line 10. Doing
 //         that now. YES -- down to 3 errors.
@@ -117,24 +117,24 @@
 //
 // 4. That seems to have made the first "wave" of errors happy and let the compiler get further. Now I have these errors:
 //
-    // :22:9: 22:54 error: missing field: `irrelevant_slice_that_needs_lifetime`
-    // :22         MagicNumber { value: lhs.value + self.value }
-    //             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    // :27:5: 30:6 note: consider using an explicit lifetime parameter as shown: fn add_to_magic_number<'a>(&self, lhs: &MagicNumber<'a>) -> MagicNumber<'a>
-    // :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber {
-    // :28         if self.is_none() { return *lhs; }
-    // :29         lhs + self.unwrap()
-    // :30     }
-    // :28:36: 28:40 error: mismatched types: expected `MagicNumber<'_>` but found `MagicNumber<'_>` (lifetime mismatch)
-    // :28         if self.is_none() { return *lhs; }
-    //                                        ^~~~
-    // :34:15: 34:40 error: missing field: `irrelevant_slice_that_needs_lifetime`
-    // :34     let one = MagicNumber { value: 40 };
-    //                   ^~~~~~~~~~~~~~~~~~~~~~~~~
-    // :35:15: 35:39 error: missing field: `irrelevant_slice_that_needs_lifetime`
-    // :35     let two = MagicNumber { value: 2 };
-    //                                                          ^~~~~~~~~~~~~~~~~~~~~~~~
-    // error: aborting due to 4 previous errors
+// :22:9: 22:54 error: missing field: `irrelevant_slice_that_needs_lifetime`
+// :22         MagicNumber { value: lhs.value + self.value }
+//             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// :27:5: 30:6 note: consider using an explicit lifetime parameter as shown: fn add_to_magic_number<'a>(&self, lhs: &MagicNumber<'a>) -> MagicNumber<'a>
+// :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// :28:36: 28:40 error: mismatched types: expected `MagicNumber<'_>` but found `MagicNumber<'_>` (lifetime mismatch)
+// :28         if self.is_none() { return *lhs; }
+//                                        ^~~~
+// :34:15: 34:40 error: missing field: `irrelevant_slice_that_needs_lifetime`
+// :34     let one = MagicNumber { value: 40 };
+//                   ^~~~~~~~~~~~~~~~~~~~~~~~~
+// :35:15: 35:39 error: missing field: `irrelevant_slice_that_needs_lifetime`
+// :35     let two = MagicNumber { value: 2 };
+//                                                          ^~~~~~~~~~~~~~~~~~~~~~~~
+// error: aborting due to 4 previous errors
 
 //   This is SUPER CONFUSING. Consider the first error and the first note. It tells me "missing field". Well that actually makes
 //    sense. I'm instantiating the struct, but I omitted a field. So WHY IN THE HELL is it followed about a note about LIFETIMES?
@@ -144,15 +144,15 @@
 //
 //   YES. This left me with one error, as follows:
 //
-        // :27:5: 30:6 note: consider using an explicit lifetime parameter as shown: fn add_to_magic_number<'a>(&self, lhs: &MagicNumber<'a>) -> MagicNumber<'a>
-        // :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber {
-        // :28         if self.is_none() { return *lhs; }
-        // :29         lhs + self.unwrap()
-        // :30     }
-        // :28:36: 28:40 error: mismatched types: expected `MagicNumber<'_>` but found `MagicNumber<'_>` (lifetime mismatch)
-        // :28         if self.is_none() { return *lhs; }
-        //                                                                               ^~~~
-        // error: aborting due to previous error
+// :27:5: 30:6 note: consider using an explicit lifetime parameter as shown: fn add_to_magic_number<'a>(&self, lhs: &MagicNumber<'a>) -> MagicNumber<'a>
+// :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// :28:36: 28:40 error: mismatched types: expected `MagicNumber<'_>` but found `MagicNumber<'_>` (lifetime mismatch)
+// :28         if self.is_none() { return *lhs; }
+//                                                                               ^~~~
+// error: aborting due to previous error
 //
 //   As you can see, the mysterious "note" is not so mysterious. It merely PRECEDES the error message it applies to. So line
 //   28 has some kind of "lifetime mismatch". We are trying to return *lhs. Let's think about this. Basically, in this case,
@@ -170,42 +170,42 @@
 //
 //    RESULTS OF TRYING APPROACH a:
 //
-        // :27:5: 30:6 note: consider using an explicit lifetime parameter as shown: fn add_to_magic_number(&self, lhs: &MagicNumber<'c>) -> MagicNumber<'c>
-        // :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber<'c> {
-        // :28         if self.is_none() { return *lhs; }
-        // :29         lhs + self.unwrap()
-        // :30     }
-        // :28:36: 28:40 error: mismatched types: expected `MagicNumber<'c>` but found `MagicNumber<'_>` (lifetime mismatch)
-        // :28         if self.is_none() { return *lhs; }
-        //                                                                               ^~~~
-        // :27:5: 30:6 error: method `add_to_magic_number` has an incompatible type for trait: expected concrete lifetime, but found bound lifetime parameter
-        // :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber<'c> {
-        // :28         if self.is_none() { return *lhs; }
-        // :29         lhs + self.unwrap()
-        // :30     }
-        // :27:73: 30:6 note: expected concrete lifetime is the lifetime 'c as defined on the block at 27:72
-        // :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber<'c> {
-        // :28         if self.is_none() { return *lhs; }
-        // :29         lhs + self.unwrap()
-        // :30     }
-        // error: aborting due to 2 previous errors
+// :27:5: 30:6 note: consider using an explicit lifetime parameter as shown: fn add_to_magic_number(&self, lhs: &MagicNumber<'c>) -> MagicNumber<'c>
+// :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber<'c> {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// :28:36: 28:40 error: mismatched types: expected `MagicNumber<'c>` but found `MagicNumber<'_>` (lifetime mismatch)
+// :28         if self.is_none() { return *lhs; }
+//                                                                               ^~~~
+// :27:5: 30:6 error: method `add_to_magic_number` has an incompatible type for trait: expected concrete lifetime, but found bound lifetime parameter
+// :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber<'c> {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// :27:73: 30:6 note: expected concrete lifetime is the lifetime 'c as defined on the block at 27:72
+// :27     fn add_to_magic_number(&self, lhs: &MagicNumber) -> MagicNumber<'c> {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// error: aborting due to 2 previous errors
 //
 // This makes sense to me, because at one point, I return lhs. But nothing I've said has tied the lifetime of lhs to c. So let's do
 //  that.
 //
 // I did that, and got the following error:
 //
-        // :27:5: 30:6 error: method `add_to_magic_number` has an incompatible type for trait: expected concrete lifetime, but found bound lifetime parameter
-        // :27     fn add_to_magic_number(&self, lhs: &'c MagicNumber) -> MagicNumber<'c> {
-        // :28         if self.is_none() { return *lhs; }
-        // :29         lhs + self.unwrap()
-        // :30     }
-        // :27:76: 30:6 note: expected concrete lifetime is the lifetime 'c as defined on the block at 27:75
-        // :27     fn add_to_magic_number(&self, lhs: &'c MagicNumber) -> MagicNumber<'c> {
-        // :28         if self.is_none() { return *lhs; }
-        // :29         lhs + self.unwrap()
-        // :30     }
-        // error: aborting due to previous error
+// :27:5: 30:6 error: method `add_to_magic_number` has an incompatible type for trait: expected concrete lifetime, but found bound lifetime parameter
+// :27     fn add_to_magic_number(&self, lhs: &'c MagicNumber) -> MagicNumber<'c> {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// :27:76: 30:6 note: expected concrete lifetime is the lifetime 'c as defined on the block at 27:75
+// :27     fn add_to_magic_number(&self, lhs: &'c MagicNumber) -> MagicNumber<'c> {
+// :28         if self.is_none() { return *lhs; }
+// :29         lhs + self.unwrap()
+// :30     }
+// error: aborting due to previous error
 //
 // This is actually starting to make sense to me, at least partly. It is saying that my add_to_magic_number signature no
 //  longer matches that required by the trait. Adding 'c to lhs apparently invalidated it. But, what's this business about
